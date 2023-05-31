@@ -4,3 +4,4 @@
 git add ./src/compile/basic.s
 git commit -m "Compiled basic.c to basic.s"
 git push origin master
+EOF
