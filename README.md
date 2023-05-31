@@ -29,23 +29,26 @@ https://en.wikipedia.org/wiki/Demosaicing
         - OK
 
     - Clone `this` Repo to the SSH PC
-
-    - Create directory in `/tmp` and copy `basic.c` inside
-        - Run copy_files.sh: `$ ./scripts/copy_files.sh`
-            - note: might not have permission: `$ chmod +x ./scripts/copy_files.sh`
     
     - Compile code
         - Run compile_file.sh: `$ ./scripts/compile_file.sh`
+            - note: might not have permission: `$ chmod +x ./scripts/compile_file.sh`
 
     - Connect to Seng 440 ECE PC
         - Refer above `seng440.ece.uvic.ca`
+
+        - Run `$ lftp -u user1,q6coHjd7P @arm`
+
+        - Run `$ put ./src/compile/basic.s`
+
+        - Exit (Or open another machine)
     
         - Telnet into Arm machine
             - `$ telnet arm`
                 - `(user1, user2, user3, user4)`
             - `q6coHjd7P`
-
-    
+            - `chmod +x basic.s`
+            - `./basic.s`
 
 
 
