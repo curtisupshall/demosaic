@@ -1,6 +1,5 @@
-#include <stdio.h>
-int main() {
-   // printf() displays the string inside quotation
-   printf("Hello, World!");
-   return 0;
+#include "arm_neon.h"
+uint32x2_t aa, bb, ss;
+int main( void) {
+ss = vadd_u32( aa, bb);
 }
