@@ -1,9 +1,10 @@
-int add( register int a, register int b){
-  register int sum ;
-  __asm__ __volatile__ (
-                        "qadd\t %0, %1, %2\n"
-                        : "=r" ( sum )
-                        : "r" ( a ) , "r" ( b )
-                        );
-  return( sum );
-}
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#define DEBUG
+#ifdef DEBUG
+# define DEBUG_PRINT(x) printf x
+#else
+# define DEBUG_PRINT(x) do {} while (0)
+#endif
