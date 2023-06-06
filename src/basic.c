@@ -1,5 +1,8 @@
-#include "arm_neon.h"
-uint32x2_t aa, bb, ss;
-int main( void) {
-ss = vadd_u32( aa, bb);
+static const int a = 7;
+static int b = 8;
+static int sum;
+
+void main()
+{
+  sum = a + b;
 }

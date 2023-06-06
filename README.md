@@ -34,15 +34,15 @@ https://en.wikipedia.org/wiki/Demosaicing
     - Clone `this` Repo to the SSH PC
 
     - Compile code
+        - note: might not have permission: `$ chmod +x ./scripts/compile_file.sh`
         - Run compile_file.sh: `$ ./scripts/compile_file.sh`
-            - note: might not have permission: `$ chmod +x ./scripts/compile_file.sh`
 
     - Connect to Seng 440 ECE PC
         - Refer above `seng440.ece.uvic.ca`
 
         - Run `$ lftp -u user1,q6coHjd7P @arm`
 
-        - Run `$ put ./src/compile/basic.exe`
+        - Run `$ put ./src/compile/basic.s`
 
         - Exit (Or open another machine)
 
@@ -50,5 +50,5 @@ https://en.wikipedia.org/wiki/Demosaicing
             - `$ telnet arm`
                 - `(user1, user2, user3, user4)`
             - `q6coHjd7P`
-            - `chmod +x basic.exe`
-            - `./basic.exe`
+            - `chmod +x basic.s`
+            - `./basic.s`
