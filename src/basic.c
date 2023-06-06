@@ -1,9 +1,4 @@
-static const int a = 7;
-static int b = 8;
-static int sum;
-
-int main()
-{
-  sum = a + b;
-  return sum;
+int add( register int a, register int b){
+  register int sum = a + b;
+  return sum ;
 }
