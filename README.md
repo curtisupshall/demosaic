@@ -42,7 +42,7 @@ https://en.wikipedia.org/wiki/Demosaicing
 
         - Run `$ lftp -u user1,q6coHjd7P @arm`
 
-        - Run `$ put ./src/compile/basic.s`
+        - Run `$ put ./src/compile/basic.exe`
 
         - Exit (Or open another machine)
 
@@ -50,5 +50,5 @@ https://en.wikipedia.org/wiki/Demosaicing
             - `$ telnet arm`
                 - `(user1, user2, user3, user4)`
             - `q6coHjd7P`
-            - `chmod +x basic.s`
-            - `./basic.s`
+            - `chmod +x basic.exe`
+            - `./basic.exe`

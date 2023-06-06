@@ -1,9 +1,9 @@
 int main (void) {
-    register int a = 0;
-    register int b = 2;
-    register volatile int c;
+    int a = 0;
+    int b = 2;
+    int c;
 
      
-     c = a + b;
-     return c;
+    c = a + b;
+    return c;
 }
