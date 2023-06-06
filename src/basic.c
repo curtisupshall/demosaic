@@ -1,9 +1,5 @@
-int main (void) {
-    int a = 0;
-    int b = 2;
-    int c;
-
-     
-    c = a + b;
-    return c;
+#include "arm_neon.h"
+uint32x2_t aa, bb, ss;
+int main( void) {
+ss = vadd_u32( aa, bb);
 }
