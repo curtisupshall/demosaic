@@ -17,7 +17,7 @@ https://en.wikipedia.org/wiki/Demosaicing
 
 ### Procedure:
 
-    - Connect to `vpn.uvic.ca`
+    - Connect to `vpn.uvic.ca` (not needed, connection to ips works without)
         - Group: 3 - Student
         - 2FA
 
@@ -31,11 +31,11 @@ https://en.wikipedia.org/wiki/Demosaicing
         - [ ] Specify username: netlink ID
         - OK
 
-    - Clone `this` Repo to the SSH PC
+        - Clone `this` Repo to the SSH PC
 
-    - Compile code
-        - note: might not have permission: `$ chmod +x ./scripts/compile_file.sh`
-        - Run compile_file.sh: `$ ./scripts/compile_file.sh`
+        - Compile code
+            - note: might not have permission: `$ chmod +x ./scripts/compile_file.sh`
+            - Run compile_file.sh: `$ ./scripts/compile_file.sh`
 
     - Connect to Seng 440 ECE PC
         - Refer above `seng440.ece.uvic.ca`

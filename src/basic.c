@@ -1,3 +1,9 @@
 void main (void) {
-    printf("Hello World!\n");
+    register int a = 0;
+    register int b = 2;
+    register volatile int c;
+
+     
+     c = a + b;
+     return c;
 }
