@@ -97,7 +97,7 @@ int main() {
     }
 
     // Create a new output file to write the modified image
-    FILE *outFp = fopen("output.bmp", "wb");
+    FILE *outFp = fopen("output/encoded.bmp", "wb");
     if (!outFp) {
         printf("Error creating output file.\n");
         free(pixels);
