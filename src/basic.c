@@ -1,5 +1,12 @@
-#include "arm_neon.h"
-uint32x2_t aa, bb, ss;
+#include <stdio.h>
+#include <stdlib.h>
 int main( void) {
-ss = vadd_u32( aa, bb);
+int a = 2;
+int b = 5;
+int c = 0;
+	
+c = a+b;
+printf("%d \n", c);
+
+return c;
 }
