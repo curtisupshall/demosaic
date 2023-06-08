@@ -30,7 +30,7 @@ typedef struct
 
 int main()
 {
-    FILE *fp = fopen("cow.bmp", "rb");
+    FILE *fp = fopen("./input/cow.bmp", "rb");
     if (!fp)
     {
         printf("Error opening file.\n");

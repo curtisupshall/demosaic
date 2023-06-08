@@ -40,9 +40,7 @@ https://en.wikipedia.org/wiki/Demosaicing
     - Connect to Seng 440 ECE PC
         - Refer above `seng440.ece.uvic.ca`
 
-        - Run `$ lftp -u user1,q6coHjd7P @arm`
-
-        - Run `$ put ./src/compile/basic.exe`
+        - Run `$ lftp -e "mirror -R ./src/compile/" -u user1,q6coHjd7P @arm`
 
         - Exit (Or open another machine)
 
@@ -50,5 +48,5 @@ https://en.wikipedia.org/wiki/Demosaicing
             - `$ telnet arm`
                 - `(user1, user2, user3, user4)`
             - `q6coHjd7P`
-            - `chmod +x basic.exe`
-            - `./basic.exe`
+            - `chmod +x ./compile/basic.exe`
+            - `./compile/basic.exe`
