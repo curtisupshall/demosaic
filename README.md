@@ -35,7 +35,7 @@ https://en.wikipedia.org/wiki/Demosaicing
 
         - Compile code
             - note: might not have permission: `$ chmod +x ./scripts/compile_file.sh`
-            - Run compile_file.sh: `$ ./scripts/compile_file.sh`
+            - Run compile_file.sh: `$ ./scripts/compile_file.sh basic`
 
     - Connect to Seng 440 ECE PC
         - Refer above `seng440.ece.uvic.ca`
