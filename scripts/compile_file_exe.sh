@@ -1,6 +1,6 @@
 #! /bin/bash
 
-echp --START COMPILE SCRIPT--
+echo --START COMPILE SCRIPT--
 
 filename=${1?param missing - file name.}
 
