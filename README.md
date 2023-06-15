@@ -50,3 +50,40 @@ https://en.wikipedia.org/wiki/Demosaicing
             - `q6coHjd7P`
             - `chmod +x ./compile/basic.exe`
             - `./compile/basic.exe`
+
+# Building the project
+
+## Building the project for arm
+
+    make
+
+## Building the project locally
+
+    make CC=gcc
+
+## Generating .s files
+
+    make color.s
+
+Replace `color` with whatever file you would like 
+
+# Usage
+
+To convert the included image run
+
+    make
+    ./demosaic
+
+by default this will create an arm binary
+
+# Testing
+
+To check how accurate the color conversion is simply run
+
+    make test
+
+# Cleaning the project
+
+If conflicting artifacts exist e.g. .o files exist run
+
+    make clean
