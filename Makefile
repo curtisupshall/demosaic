@@ -3,7 +3,7 @@ CC=arm-linux-gcc
 # These are mostly here to on to cover our buts during the base setup
 CFLAGS= -std=c99 -O3
 ASMCFLAGS= -static -S -std=c99 -O3
-LIB = colors.c Read_PPM.c
+LIB = interpolate.c bmp.c bmpfunc.c #Read_PPM.c
 SRC = $(LIB) main.c
 OBJ = ${SRC:.c=.o}
 TEST_SRC = $(LIB) test.c
@@ -29,4 +29,4 @@ test: $(TEST_OBJ)
 	./test
 
 clean:
-	$(RM) cow2.ppm demosaic test  *.o
+	$(RM) cow2.bpm demosaic test  *.o
