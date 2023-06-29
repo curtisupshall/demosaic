@@ -3,7 +3,7 @@ CC=arm-linux-gcc
 # These are mostly here to on to cover our buts during the base setup
 CFLAGS= -std=c99 -O3
 ASMCFLAGS= -static -S -std=c99 -O3
-LIB = interpolate.c bmp.c bmpfunc.c #Read_PPM.c
+LIB = interpolate.c bmp.c #bmpfunc.c #Read_PPM.c
 SRC = $(LIB) main.c
 OBJ = ${SRC:.c=.o}
 TEST_SRC = $(LIB) test.c

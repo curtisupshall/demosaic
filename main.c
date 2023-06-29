@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "bmp.h"
-#include "bmpfunc.h"
 
 #define PRINT_ERROR(arg) printf("ERROR: " arg "\n");
 #define THRESHOLD 140
@@ -10,36 +9,35 @@
 int main()
 {
 
-    BMP_Image *img = BMP_open("input.bmp");
-    if (img == NULL)
+    // Read image into BMP struct
+    BMP *bmp = bopen("input.bmp");
+
+    unsigned int x, y, width, height;
+    unsigned char r, g, b;
+
+    // Gets image width in pixels
+    width = get_width(bmp);
+
+    // Gets image height in pixels
+    height = get_height(bmp);
+
+    for (x = 0; x < width; x++)
     {
-        PRINT_ERROR("Failed to open input.bmp");
-        return EXIT_FAILURE;
+        for (y = 0; y < height; y++)
+        {
+            // Gets pixel rgb values at point (x, y)
+            get_pixel_rgb(bmp, x, y, &r, &g, &b);
+
+            // Sets pixel rgb values at point (x, y)
+            set_pixel_rgb(bmp, x, y, 255 - r, 255 - g, 255 - b);
+        }
     }
 
-    printf("Image width: %d\n", img->width);
-    printf("Image height: %d\n", img->height);
-    printf("Image bytes per pixel: %d\n", img->bytes_per_pixel);
-    printf("Image data size: %d\n", img->data_size);
+    // Write bmp contents to file
+    bwrite(bmp, "output.bmp");
 
-    // BMP_invert(img);
-    // BMP_color(img, 2);
-    // BMP_color(img, 1);
-    // BMP_color(img, 0);
-    // BMP_edge(img, THRESHOLD);
-    // BMP_gray(img);
-    // BMP_equalize(img);
-    // BMP_checker(img);
-    // BMP_mix(img);
+    // Free memory
+    bclose(bmp);
 
-    // Save the file
-    if (BMP_save(img, "output.bmp") == 0)
-    {
-        printf("Output file invalid!\n");
-        BMP_destroy(img);
-        return EXIT_FAILURE;
-    }
-    // Destroy the BMP image
-    BMP_destroy(img);
-    return EXIT_SUCCESS;
+    return 0;
 }
