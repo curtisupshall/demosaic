@@ -1,5 +1,5 @@
 # To build for locally run `make CC=clang`
-CC=arm-linux-gcc 
+CC=/opt/arm/4.3.2/bin/arm-linux-gcc
 # These are mostly here to on to cover our buts during the base setup
 CFLAGS= -std=c99 -O3
 ASMCFLAGS= -static -S -std=c99 -O3
