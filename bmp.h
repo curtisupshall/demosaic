@@ -1,11 +1,9 @@
 #ifndef BMP_H
 #define BMP_H
+#include <stdint.h>
 
 // Pixel structure
-// Not meant to be edited directly
-// Please use the API
-
-typedef struct pixel_data
+typedef struct
 {
     unsigned char red;
     unsigned char green;
@@ -14,34 +12,30 @@ typedef struct pixel_data
 } pixel;
 
 // BMP structure
-// Not meant to be edited directly
-// Please use the API
-
-typedef struct BMP_data
+typedef struct
 {
-    unsigned int file_byte_number;
-    unsigned char* file_byte_contents;
+    uint16_t file_byte_number;
+    unsigned char *file_byte_contents;
 
-    unsigned int pixel_array_start;
+    uint8_t pixel_array_start;
 
-    unsigned int width;
-    unsigned int height;
-    unsigned int depth;
+    uint8_t width;
+    uint8_t height;
+    uint8_t depth;
 
-    pixel* pixels;
+    pixel *pixels;
 } BMP;
 
 // Public function declarations
 
-BMP* bopen(char* file_path);
-BMP* b_deep_copy(BMP* to_copy);
-int get_width(BMP* bmp);
-int get_height(BMP* bmp);
-unsigned int get_depth(BMP* bmp);
-void get_pixel_rgb(BMP* bmp, int x, int y, unsigned char* r, unsigned char* g, unsigned char* b);
-void set_pixel_rgb(BMP* bmp, int x, int y, unsigned char r, unsigned char g, unsigned char b);
-void bwrite(BMP* bmp, char* file_name);
-void bclose(BMP* bmp);
+BMP *bopen(char *file_path);
+// BMP *b_deep_copy(BMP *to_copy);
+uint8_t get_width(BMP *bmp);
+uint8_t get_height(BMP *bmp);
+uint8_t get_depth(BMP *bmp);
+// void get_pixel_rgb(BMP *bmp, int x, int y, unsigned char *r, unsigned char *g, unsigned char *b);
+// void set_pixel_rgb(BMP *bmp, int x, int y, unsigned char r, unsigned char g, unsigned char b);
+void bwrite(BMP *bmp, char *file_name);
+void bclose(BMP *bmp);
 
-
-#endif 
+#endif
