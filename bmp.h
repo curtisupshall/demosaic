@@ -5,18 +5,15 @@
 // Pixel structure
 typedef struct
 {
-    unsigned char red;
-    unsigned char green;
-    unsigned char blue;
-    unsigned char alpha;
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
 } pixel;
 
 // BMP structure
 typedef struct
 {
     uint16_t file_byte_number;
-    unsigned char *file_byte_contents;
-
     uint8_t pixel_array_start;
 
     uint8_t width;

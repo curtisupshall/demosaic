@@ -9,7 +9,6 @@
 #define BLUE 0
 #define GREEN 1
 #define RED 2
-#define ALPHA 3
 
 #define PIXEL_ARRAY_START_BYTES 4
 #define PIXEL_ARRAY_START_OFFSET 10
@@ -28,19 +27,15 @@
 void _throw_error(char *message);
 uint8_t _get_int_from_buffer(uint8_t bytes,
                              uint8_t offset,
-                             unsigned char *buffer);
+                             char *buffer);
 uint16_t _get_file_byte_number(FILE *fp);
-unsigned char *_get_file_byte_contents(FILE *fp, unsigned int file_byte_number);
-int _validate_file_type(unsigned char *file_byte_contents);
+// unsigned char *_get_file_byte_contents(FILE *fp, uint16_t file_byte_number);
+int _validate_file_type(char buff[32]);
 int _validate_depth(unsigned int depth);
-uint8_t _get_pixel_array_start(unsigned char *file_byte_contents);
-uint8_t _get_width(unsigned char *file_byte_contents);
-uint8_t _get_height(unsigned char *file_byte_contents);
-uint8_t _get_depth(unsigned char *file_byte_contents);
-void _update_file_byte_contents(BMP *bmp, uint8_t index, uint8_t offset, uint8_t channel);
-void _populate_pixel_array(BMP *bmp);
-void _map(BMP *bmp, void (*f)(BMP *bmp, uint8_t, uint8_t, uint8_t));
-void _get_pixel(BMP *bmp, uint8_t index, uint8_t offset, uint8_t channel);
+uint8_t _get_pixel_array_start(char buff[32]);
+uint8_t _get_width(char buff[32]);
+uint8_t _get_height(char buff[32]);
+uint8_t _get_depth(char buff[32]);
 
 // Public function implementations
 
@@ -48,6 +43,7 @@ BMP *bopen(char *file_path)
 {
     printf("bopen\n");
 
+    char buff[32];
     BMP *bmp;
     FILE *fp;
 
@@ -58,26 +54,31 @@ BMP *bopen(char *file_path)
     }
     printf("file opened\n");
 
+    // read file byte number
     bmp = (BMP *)malloc(sizeof(BMP));
     bmp->file_byte_number = _get_file_byte_number(fp);
     printf("file_byte_number: %d\n", bmp->file_byte_number);
 
-    bmp->file_byte_contents = _get_file_byte_contents(fp, bmp->file_byte_number);
-    printf("file_byte_contents: %s\n", bmp->file_byte_contents);
-    fclose(fp);
+    // read image format
+    if (!fgets(buff, sizeof(buff), fp))
+    {
+        perror(file_path);
+        exit(1);
+    }
+    printf("file format: %s\n", buff);
 
-    if (!_validate_file_type(bmp->file_byte_contents))
+    if (!_validate_file_type(buff))
     {
         _throw_error("Invalid file type");
     }
-    printf("file type validated\n");
+    printf("file type validated %s\n", buff);
 
-    bmp->pixel_array_start = _get_pixel_array_start(bmp->file_byte_contents);
+    bmp->pixel_array_start = _get_pixel_array_start(buff);
     printf("pixel_array_start: %d\n", bmp->pixel_array_start);
 
-    bmp->width = _get_width(bmp->file_byte_contents);
-    bmp->height = _get_height(bmp->file_byte_contents);
-    bmp->depth = _get_depth(bmp->file_byte_contents);
+    bmp->width = _get_width(buff);
+    bmp->height = _get_height(buff);
+    bmp->depth = _get_depth(buff);
 
     printf("width: %d\n", bmp->width);
     printf("height: %d\n", bmp->height);
@@ -89,47 +90,15 @@ BMP *bopen(char *file_path)
     }
     printf("depth validated\n");
 
-    _populate_pixel_array(bmp);
-    printf("pixel array populated\n");
+    // read pixel array
+    fseek(fp, bmp->pixel_array_start, SEEK_SET);
+    bmp->pixels = (pixel *)malloc(sizeof(pixel) * bmp->width * bmp->height);
+    fread(bmp->pixels, sizeof(pixel), bmp->width * bmp->height, fp);
+
+    printf("pixel array read\n");
 
     return bmp;
 }
-
-// BMP* b_deep_copy(BMP* to_copy)
-// {
-//     BMP* copy = (BMP*) malloc(sizeof(BMP));
-//     copy->file_byte_number = to_copy->file_byte_number;
-//     copy->pixel_array_start = to_copy->pixel_array_start;
-//     copy->width = to_copy->width;
-//     copy->height = to_copy->height;
-//     copy->depth = to_copy->depth;
-
-//     copy->file_byte_contents = (unsigned char*) malloc(copy->file_byte_number * sizeof(unsigned char));
-
-//     unsigned int i;
-//     for (i = 0; i < copy->file_byte_number; i++)
-//     {
-//         copy->file_byte_contents[i] = to_copy->file_byte_contents[i];
-//     }
-
-//     copy->pixels = (pixel*) malloc(copy->width * copy->height * sizeof(pixel));
-
-//     unsigned int x, y;
-//     int index;
-//     for (y = 0; y < copy->height; y++)
-//     {
-//         for (x = 0; x < copy->width; x++)
-//         {
-//             index = y * copy->width + x;
-//             copy->pixels[index].red = to_copy->pixels[index].red;
-//             copy->pixels[index].green = to_copy->pixels[index].green;
-//             copy->pixels[index].blue = to_copy->pixels[index].blue;
-//             copy->pixels[index].alpha = to_copy->pixels[index].alpha;
-//         }
-//     }
-
-//     return copy;
-// }
 
 uint8_t get_width(BMP *bmp)
 {
@@ -166,19 +135,30 @@ void bwrite(BMP *bmp, char *file_name)
 {
     FILE *fp;
 
-    _map(bmp, _update_file_byte_contents);
-
     fp = fopen(file_name, "wb");
-    fwrite(bmp->file_byte_contents, sizeof(char), bmp->file_byte_number, fp);
+    if (!fp)
+    {
+        _throw_error("Unable to open file");
+    }
+    printf("output file opened\n");
+
+    // write header info
+    fwrite("BM", 1, 2, fp);
+    printf("file type written\n");
+    
+    
+
+    fwrite(bmp->pixels, sizeof(pixel), bmp->width * bmp->height, fp);
+    printf("pixel array written\n");
+
     fclose(fp);
+    printf("output file closed\n");
 }
 
 void bclose(BMP *bmp)
 {
     free(bmp->pixels);
     bmp->pixels = NULL;
-    free(bmp->file_byte_contents);
-    bmp->file_byte_contents = NULL;
     free(bmp);
     bmp = NULL;
 }
@@ -193,7 +173,7 @@ void _throw_error(char *message)
 
 uint8_t _get_int_from_buffer(uint8_t bytes,
                              uint8_t offset,
-                             unsigned char *buffer)
+                             char *buffer)
 {
     uint8_t value = 0;
     int i;
@@ -216,20 +196,20 @@ uint16_t _get_file_byte_number(FILE *fp)
     return byte_number;
 }
 
-unsigned char *_get_file_byte_contents(FILE *fp, unsigned int file_byte_number)
-{
-    unsigned char *buffer = (unsigned char *)malloc(file_byte_number * sizeof(char));
-    unsigned int result = fread(buffer, 1, file_byte_number, fp);
+// char *_get_file_byte_contents(FILE *fp, uint16_t file_byte_number)
+// {
+//     char *buffer[32] = (pixel *)malloc(file_byte_number * sizeof(pixel));
+//     uint16_t result = fread(buffer, 1, file_byte_number, fp);
 
-    if (result != file_byte_number)
-    {
-        _throw_error("There was a problem reading the file");
-    }
+//     if (result != file_byte_number)
+//     {
+//         _throw_error("There was a problem reading the file");
+//     }
 
-    return buffer;
-}
+//     return buffer;
+// }
 
-int _validate_file_type(unsigned char *file_byte_contents)
+int _validate_file_type(char *file_byte_contents)
 {
     return file_byte_contents[0] == 'B' && file_byte_contents[1] == 'M';
 }
@@ -239,95 +219,22 @@ int _validate_depth(unsigned int depth)
     return depth == 24 || depth == 32;
 }
 
-uint8_t _get_pixel_array_start(unsigned char *file_byte_contents)
+uint8_t _get_pixel_array_start(char *file_byte_contents)
 {
     return _get_int_from_buffer(PIXEL_ARRAY_START_BYTES, PIXEL_ARRAY_START_OFFSET, file_byte_contents);
 }
 
-uint8_t _get_width(unsigned char *file_byte_contents)
+uint8_t _get_width(char *file_byte_contents)
 {
     return (uint8_t)_get_int_from_buffer(WIDTH_BYTES, WIDTH_OFFSET, file_byte_contents);
 }
 
-uint8_t _get_height(unsigned char *file_byte_contents)
+uint8_t _get_height(char *file_byte_contents)
 {
     return (uint8_t)_get_int_from_buffer(HEIGHT_BYTES, HEIGHT_OFFSET, file_byte_contents);
 }
 
-uint8_t _get_depth(unsigned char *file_byte_contents)
+uint8_t _get_depth(char *file_byte_contents)
 {
     return (uint8_t)_get_int_from_buffer(DEPTH_BYTES, DEPTH_OFFSET, file_byte_contents);
-}
-
-void _update_file_byte_contents(BMP *bmp, uint8_t index, uint8_t offset, uint8_t channel)
-{
-    char value;
-    switch (channel)
-    {
-    case BLUE:
-        value = bmp->pixels[index].blue;
-        break;
-    case GREEN:
-        value = bmp->pixels[index].green;
-        break;
-    case RED:
-        value = bmp->pixels[index].red;
-        break;
-    case ALPHA:
-        value = bmp->pixels[index].alpha;
-        break;
-    }
-    bmp->file_byte_contents[offset + channel] = value;
-}
-
-void _populate_pixel_array(BMP *bmp)
-{
-    bmp->pixels = (pixel *)malloc(bmp->width * bmp->height * sizeof(pixel));
-    _map(bmp, _get_pixel);
-}
-
-void _map(BMP *bmp, void (*f)(BMP *, uint8_t, uint8_t, uint8_t))
-{
-    uint8_t channels = bmp->depth / (sizeof(uint8_t) * BITS_PER_BYTE);
-    uint8_t row_size = ((uint8_t)(bmp->depth * bmp->width + 31) / 32) * 4;
-    uint8_t padding = row_size - bmp->width * channels;
-
-    printf("channels: %d\n", channels);
-    printf("row_size: %d\n", row_size);
-    printf("padding: %d\n", padding);
-
-    uint8_t c;
-    uint8_t x, y, index, offset;
-    for (y = 0; y < bmp->height; y++)
-    {
-        for (x = 0; x < bmp->width; x++)
-        {
-            index = y * bmp->width + x;
-            offset = bmp->pixel_array_start + index * channels + y * padding;
-            for (c = 0; c < channels; c++)
-            {
-                (*f)(bmp, index, offset, c);
-            }
-        }
-    }
-}
-
-void _get_pixel(BMP *bmp, uint8_t index, uint8_t offset, uint8_t channel)
-{
-    uint8_t value = _get_int_from_buffer(sizeof(uint8_t), offset + channel, bmp->file_byte_contents);
-    switch (channel)
-    {
-    case BLUE:
-        bmp->pixels[index].blue = value;
-        break;
-    case GREEN:
-        bmp->pixels[index].green = value;
-        break;
-    case RED:
-        bmp->pixels[index].red = value;
-        break;
-    case ALPHA:
-        bmp->pixels[index].alpha = value;
-        break;
-    }
 }
