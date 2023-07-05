@@ -29,4 +29,4 @@ test: $(TEST_OBJ)
 	./test
 
 clean:
-	$(RM) cow2.bpm demosaic test  *.o
+	$(RM) output.bmp demosaic test  *.o

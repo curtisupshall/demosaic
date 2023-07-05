@@ -25,134 +25,106 @@
 // Private function declarations
 
 void _throw_error(char *message);
-uint8_t _get_int_from_buffer(uint8_t bytes,
-                             uint8_t offset,
-                             char *buffer);
-uint16_t _get_file_byte_number(FILE *fp);
-// unsigned char *_get_file_byte_contents(FILE *fp, uint16_t file_byte_number);
-int _validate_file_type(char buff[32]);
-int _validate_depth(unsigned int depth);
-uint8_t _get_pixel_array_start(char buff[32]);
-uint8_t _get_width(char buff[32]);
-uint8_t _get_height(char buff[32]);
-uint8_t _get_depth(char buff[32]);
 
+void readInMetadata(BMPHeader *header, BMPInfo *info, FILE *stream);
+uint32_t bytesToU32Big(uint8_t a, uint8_t b, uint8_t c, uint8_t d);
+uint32_t bytesToU32Little(uint8_t a, uint8_t b, uint8_t c, uint8_t d);
 // Public function implementations
 
-BMP *bopen(char *file_path)
+BMP *bopen(FILE *fp, uint16_t data_length)
 {
-    printf("bopen\n");
+    printf("------------------bopen------------------\n");
 
-    char buff[32];
     BMP *bmp;
-    FILE *fp;
 
-    fp = fopen(file_path, "rb");
-    if (!fp)
-    {
-        _throw_error("Unable to open file");
-    }
-    printf("file opened\n");
-
-    // read file byte number
+    // init bmp
     bmp = (BMP *)malloc(sizeof(BMP));
-    bmp->file_byte_number = _get_file_byte_number(fp);
-    printf("file_byte_number: %d\n", bmp->file_byte_number);
-
-    // read image format
-    if (!fgets(buff, sizeof(buff), fp))
+    if (!bmp)
     {
-        perror(file_path);
-        exit(1);
+        _throw_error("Unable to allocate memory for BMP struct");
     }
-    printf("file format: %s\n", buff);
 
-    if (!_validate_file_type(buff))
-    {
-        _throw_error("Invalid file type");
-    }
-    printf("file type validated %s\n", buff);
+    // Read every pixel
+    BGR8Bit pixels;
+    // fread(&pixels, sizeof(BGR8Bit), data_length, fp);
 
-    bmp->pixel_array_start = _get_pixel_array_start(buff);
-    printf("pixel_array_start: %d\n", bmp->pixel_array_start);
+    bmp->pixels = &pixels;
+    printf("pixels: %d\n", bmp->pixels);
 
-    bmp->width = _get_width(buff);
-    bmp->height = _get_height(buff);
-    bmp->depth = _get_depth(buff);
-
-    printf("width: %d\n", bmp->width);
-    printf("height: %d\n", bmp->height);
-    printf("depth: %d\n", bmp->depth);
-
-    if (!_validate_depth(bmp->depth))
-    {
-        _throw_error("Invalid file depth");
-    }
-    printf("depth validated\n");
-
-    // read pixel array
-    fseek(fp, bmp->pixel_array_start, SEEK_SET);
-    bmp->pixels = (pixel *)malloc(sizeof(pixel) * bmp->width * bmp->height);
-    fread(bmp->pixels, sizeof(pixel), bmp->width * bmp->height, fp);
-
-    printf("pixel array read\n");
+    printf("------------------bopen-Finished------------------\n");
 
     return bmp;
 }
 
-uint8_t get_width(BMP *bmp)
+uint32_t readBitmap(BMPHeader *header, BMPInfo *info, BGR8Bit *data_ptr, size_t data_len, FILE *stream)
 {
-    return bmp->width;
+    // Read data
+    readInMetadata(header, info, stream);
+
+    // Read in every pixel
+    return fread(data_ptr, sizeof(BGR8Bit), data_len, stream);
 }
 
-uint8_t get_height(BMP *bmp)
+void bwrite(BMPHeader *header, BMPInfo *info, BGR8Bit *data_ptr, size_t data_len, FILE *stream)
 {
-    return bmp->height;
+    printf("------------------bwrite------------------\n");
+
+    fwrite(header, sizeof_BMPHeader, 1, stream);
+    fwrite(info, sizeof_BMPInfo, 1, stream);
+    fwrite(data_ptr, sizeof(BGR8Bit), data_len, stream);
+
+    printf("------------------bwrite-Finished------------------\n");
 }
 
-uint8_t get_depth(BMP *bmp)
+void readInMetadata(BMPHeader *header, BMPInfo *info, FILE *stream)
 {
-    return bmp->depth;
+    // Fill in the header (handling little endian)
+    (*header).signature[0] = fgetc(stream);
+    (*header).signature[1] = fgetc(stream);
+    (*header).size = bytesToU32Little(fgetc(stream), fgetc(stream),
+                                      fgetc(stream), fgetc(stream));
+    (*header).reserved = bytesToU32Little(fgetc(stream), fgetc(stream),
+                                          fgetc(stream), fgetc(stream));
+    (*header).data_offset = bytesToU32Little(fgetc(stream), fgetc(stream),
+                                             fgetc(stream), fgetc(stream));
+
+    // Read in the file info
+    fread(info, sizeof_BMPInfo, 1, stream);
 }
 
-// void get_pixel_rgb(BMP* bmp, int x, int y, unsigned char* r, unsigned char* g, unsigned char* b)
-// {
-//     int index = y * bmp->width + x;
-//     *r = bmp->pixels[index].red;
-//     *g = bmp->pixels[index].green;
-//     *b = bmp->pixels[index].blue;
-// }
-
-// void set_pixel_rgb(BMP* bmp, int x, int y, unsigned char r, unsigned char g, unsigned char b)
-// {
-//     int index = y * bmp->width + x;
-//     bmp->pixels[index].red = r;
-//     bmp->pixels[index].green = g;
-//     bmp->pixels[index].blue = b;
-// }
-
-void bwrite(BMP *bmp, char *file_name)
+uint32_t getBitmapDataLength(FILE *stream)
 {
-    FILE *fp;
+    // Allocate the header and info data
+    BMPHeader *header = (BMPHeader *)malloc(sizeof_BMPHeader);
+    BMPInfo *info = (BMPInfo *)malloc(sizeof_BMPInfo);
 
-    fp = fopen(file_name, "wb");
-    if (!fp)
-    {
-        _throw_error("Unable to open file");
-    }
-    printf("output file opened\n");
+    // Read data
+    readInMetadata(header, info, stream);
 
-    // write header info
-    fwrite("BM", 1, 2, fp);
-    printf("file type written\n");
-    
-    
+    // Get the position of the first pixel
+    uint32_t offset = (*header).data_offset;
+    printf("offset: %d\n", offset);
 
-    fwrite(bmp->pixels, sizeof(pixel), bmp->width * bmp->height, fp);
-    printf("pixel array written\n");
+    // Get the number of bytes in the file
+    uint32_t num_bytes = (*header).size;
+    printf("num_bytes: %d\n", num_bytes);
 
-    fclose(fp);
-    printf("output file closed\n");
+    // Free the used header and info
+    free(header);
+    free(info);
+
+    // Return the number of pixels
+    return num_bytes - offset;
+}
+
+uint32_t bytesToU32Big(uint8_t a, uint8_t b, uint8_t c, uint8_t d)
+{
+    return ((a << 24) | (b << 16) | (c << 8) | (d));
+}
+
+uint32_t bytesToU32Little(uint8_t a, uint8_t b, uint8_t c, uint8_t d)
+{
+    return ((a << 24) | (b << 16) | (c << 8) | (d));
 }
 
 void bclose(BMP *bmp)
@@ -164,77 +136,24 @@ void bclose(BMP *bmp)
 }
 
 // Private function implementations
+void _validate_file_type(char signature[2])
+{
+    if (!(signature[0] == 'B' && signature[1] == 'M'))
+    {
+        _throw_error("Invalid file type");
+    }
+}
+
+void _validate_depth(unsigned int depth)
+{
+    if (!(depth == 24 || depth == 32))
+    {
+        _throw_error("Invalid file depth");
+    }
+}
 
 void _throw_error(char *message)
 {
     fprintf(stderr, "%s\n", message);
     exit(1);
-}
-
-uint8_t _get_int_from_buffer(uint8_t bytes,
-                             uint8_t offset,
-                             char *buffer)
-{
-    uint8_t value = 0;
-    int i;
-
-    for (i = bytes - 1; i >= 0; --i)
-    {
-        value <<= 8;
-        value += buffer[i + offset];
-    }
-
-    return value;
-}
-
-uint16_t _get_file_byte_number(FILE *fp)
-{
-    uint16_t byte_number;
-    fseek(fp, 0, SEEK_END);
-    byte_number = ftell(fp);
-    rewind(fp);
-    return byte_number;
-}
-
-// char *_get_file_byte_contents(FILE *fp, uint16_t file_byte_number)
-// {
-//     char *buffer[32] = (pixel *)malloc(file_byte_number * sizeof(pixel));
-//     uint16_t result = fread(buffer, 1, file_byte_number, fp);
-
-//     if (result != file_byte_number)
-//     {
-//         _throw_error("There was a problem reading the file");
-//     }
-
-//     return buffer;
-// }
-
-int _validate_file_type(char *file_byte_contents)
-{
-    return file_byte_contents[0] == 'B' && file_byte_contents[1] == 'M';
-}
-
-int _validate_depth(unsigned int depth)
-{
-    return depth == 24 || depth == 32;
-}
-
-uint8_t _get_pixel_array_start(char *file_byte_contents)
-{
-    return _get_int_from_buffer(PIXEL_ARRAY_START_BYTES, PIXEL_ARRAY_START_OFFSET, file_byte_contents);
-}
-
-uint8_t _get_width(char *file_byte_contents)
-{
-    return (uint8_t)_get_int_from_buffer(WIDTH_BYTES, WIDTH_OFFSET, file_byte_contents);
-}
-
-uint8_t _get_height(char *file_byte_contents)
-{
-    return (uint8_t)_get_int_from_buffer(HEIGHT_BYTES, HEIGHT_OFFSET, file_byte_contents);
-}
-
-uint8_t _get_depth(char *file_byte_contents)
-{
-    return (uint8_t)_get_int_from_buffer(DEPTH_BYTES, DEPTH_OFFSET, file_byte_contents);
 }
