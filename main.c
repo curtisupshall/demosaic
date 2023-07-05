@@ -32,37 +32,37 @@ int main()
 
     fread(&header, sizeof_BMPHeader, 1, fp);
     printf("header size: %d\n", header.size);
-    printf("header data_offset: %d\n", header.data_offset);
     printf("header reserved: %d\n", header.reserved);
+    printf("header data_offset: %d\n", header.data_offset);
     printf("header signature: %s\n", header.signature);
 
     fread(&info, sizeof_BMPInfo, 1, fp);
-    printf("info size: %d\n", info.size);
     printf("info width: %d\n", info.width);
+    printf("info size: %d\n", info.size);
     printf("info height: %d\n", info.height);
     printf("info color_planes: %d\n", info.color_planes);
-    printf("info color_depth: %d\n", info.color_depth);
     printf("info compression: %d\n", info.compression);
+    printf("info color_depth: %d\n", info.color_depth);
     printf("info raw_size: %d\n", info.raw_size);
     printf("info horizontal_ppm: %d\n", info.horizontal_ppm);
-    printf("info vertical_ppm: %d\n", info.vertical_ppm);
     printf("info color_table: %d\n", info.color_table);
+    printf("info vertical_ppm: %d\n", info.vertical_ppm);
     printf("info important_colors: %d\n", info.important_colors);
 
-    // readBitmap(&header, &info, &pixels, data_length, fp);
     // readInMetadata(&header, &info, fp);
-    //BELOOW THIS CAUSES A SEGMENATION FAULT FOR SOME REASON
+    // readBitmap(&header, &info, &pixels, data_length, fp);
     // fread(&pixels, sizeof(RGB8Bit), data_length, fp);
+    // BELOOW THIS CAUSES A SEGMENATION FAULT FOR SOME REASON
 
-    _validate_file_type(header.signature);
     printf("file type validated %s\n", header.signature);
-
+    _validate_file_type(header.signature);
     _validate_depth(info.color_depth);
-    printf("depth validated\n");
 
+    printf("depth validated\n");
     // fread(&pixels, sizeof(BGR8Bit), data_length, fp);
 
     // Read image into BMP struct
+
     // BMP *bmp = bopen(fp, data_length);
 
     FILE *op;
