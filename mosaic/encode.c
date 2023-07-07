@@ -72,27 +72,27 @@ int main() {
             // printf("Pixel (%d, %d): R=%d, G=%d, B=%d\n", x, y, px[2], px[1], px[0]);
 
             // Green pixel
-            px[2] = 0; // Red channel
-            px[0] = 0; // Blue channel
+            px[2] = px[1]; // Red channel
+            px[0] = px[1]; // Blue channel
 
             x++;
             px = &pixels[y * rowSize + x * 3];
             // Red pixel
-            px[1] = 0; // Green channel
-            px[0] = 0; // Blue channel
+            px[1] = px[2]; // Green channel
+            px[0] = px[2]; // Blue channel
         }
         y++;
         for (int x = 0; x < infoHeader.width; x ++) {
             uint8_t *px = &pixels[y * rowSize + x * 3];
             // Blue pixel
-            px[2] = 0; 
-            px[1] = 0;
+            px[2] = px[0]; 
+            px[1] = px[0];
 
             x++;
             px = &pixels[y * rowSize + x * 3];
             // Green pixel
-            px[2] = 0; 
-            px[0] = 0;
+            px[2] = px[1]; 
+            px[0] = px[1];
         }
     }
 
