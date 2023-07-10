@@ -2,6 +2,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#define RED 2
+#define GREEN 1
+#define BLUE 0
+
 #pragma pack(push, 1)
 typedef struct {
     uint16_t type;
@@ -65,49 +69,73 @@ int main() {
 
     fclose(fp);
 
-    // Access pixel values
-    for (int y = 0; y < infoHeader.height; y++) {
-        for (int x = 0; x < infoHeader.width; x ++) {
-            // Gr pixel gets red values from the left/right, and blue values from above/below
-            uint8_t *px = &pixels[y * rowSize + x * 3];
-            
-            // Red channel
-            px[2] = px[1];
-            
-            // Blue channel
-            px[0] = px[1];
+    uint8_t *px;
 
-            x++;
-            // R pixel, gets green values from surrounding Gr and Gb pixels, and blue values from ...?
+    // Access pixel values
+    for (int y = 2; y < infoHeader.height - 2; y++) {
+        for (int x = 2; x < infoHeader.width - 2; x ++) {
+            // Gr pixel
             px = &pixels[y * rowSize + x * 3];
 
-            // Green channel
-            px[1] = px[2];
+            // Red channel derived from left and right pixels
+            px[RED] = (pixels[y * rowSize + ((x - 1) * 3) + RED] + pixels[y * rowSize + ((x + 1) * 3) + RED]) / 2;
             
-            // Blue channel
-            px[0] = px[2];
+            // Blue channel derived from above and below pixels
+            px[BLUE] = (pixels[(y + 1) * rowSize + (x * 3) + BLUE] + pixels[(y - 1) * rowSize + (x * 3) + BLUE]) / 2;
+
+            x++;
+
+            // R pixel
+            px = &pixels[y * rowSize + x * 3];
+
+            // Green channel derived form four adjacent green pixels
+            px[GREEN] = (
+                pixels[(y + 1) * rowSize + (x * 3) + GREEN] +
+                pixels[(y - 1) * rowSize + (x * 3) + GREEN] +
+                pixels[y * rowSize + ((x - 1) * 3) + GREEN] +
+                pixels[y * rowSize + ((x + 1) * 3) + GREEN]
+            ) / 4;
+
+            // Blue channel derived from four diagonal neighbouring blue pixels
+            px[BLUE] = (
+                pixels[(y + 1) * rowSize + ((x - 1) * 3) + BLUE] +
+                pixels[(y + 1) * rowSize + ((x + 1) * 3) + BLUE] +
+                pixels[(y - 1) * rowSize + ((x - 1) * 3) + BLUE] +
+                pixels[(y - 1) * rowSize + ((x + 1) * 3) + BLUE]
+            ) / 4;
         }
 
         y++;
         for (int x = 0; x < infoHeader.width; x ++) {
             // B pixel
-            uint8_t *px = &pixels[y * rowSize + x * 3];
+            px = &pixels[y * rowSize + x * 3];
             
-            // Red channel
-            px[2] = px[0]; 
+            // Red channel derived from four diagonal neighbouring red pixels
+            px[RED] = (
+                pixels[(y + 1) * rowSize + ((x - 1) * 3) + RED] +
+                pixels[(y + 1) * rowSize + ((x + 1) * 3) + RED] +
+                pixels[(y - 1) * rowSize + ((x - 1) * 3) + RED] +
+                pixels[(y - 1) * rowSize + ((x + 1) * 3) + RED]
+            ) / 4;
 
-            // Green channel
-            px[1] = px[0];
+            // Green channel derived form four adjacent green pixels
+            px[GREEN] = (
+                pixels[(y + 1) * rowSize + (x * 3) + GREEN] +
+                pixels[(y - 1) * rowSize + (x * 3) + GREEN] +
+                pixels[y * rowSize + ((x - 1) * 3) + GREEN] +
+                pixels[y * rowSize + ((x + 1) * 3) + GREEN]
+            ) / 4;
 
             x++;
+
             // Gb pixel
             px = &pixels[y * rowSize + x * 3];
             
-            // Red channel
-            px[2] = px[1]; 
+            // Red channel derived from above and below pixels
+            px[RED] = (pixels[(y + 1) * rowSize + (x * 3) + RED] + pixels[(y - 1) * rowSize + (x * 3) + RED]) / 2;
 
-            // Blue channel
-            px[0] = px[1];
+            // Blue channel derived from left and right pixels
+            px[BLUE] = (pixels[y * rowSize + ((x - 1) * 3) + BLUE] + pixels[y * rowSize + ((x + 1) * 3) + BLUE]) / 2;
         }
     }
 
