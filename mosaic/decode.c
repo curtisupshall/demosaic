@@ -27,7 +27,7 @@ typedef struct {
 #pragma pack(pop)
 
 int main() {
-    FILE *fp = fopen("blue.bmp", "rb");
+    FILE *fp = fopen("output/encoded.bmp", "rb");
     if (!fp) {
         printf("Error opening file.\n");
         return 1;
@@ -68,36 +68,51 @@ int main() {
     // Access pixel values
     for (int y = 0; y < infoHeader.height; y++) {
         for (int x = 0; x < infoHeader.width; x ++) {
+            // Gr pixel gets red values from the left/right, and blue values from above/below
             uint8_t *px = &pixels[y * rowSize + x * 3];
-            // printf("Pixel (%d, %d): R=%d, G=%d, B=%d\n", x, y, px[2], px[1], px[0]);
-
-            // Green pixel
-            px[2] = px[1]; // Red channel
-            px[0] = px[1]; // Blue channel
+            
+            // Red channel
+            px[2] = px[1];
+            
+            // Blue channel
+            px[0] = px[1];
 
             x++;
+            // R pixel, gets green values from surrounding Gr and Gb pixels, and blue values from ...?
             px = &pixels[y * rowSize + x * 3];
-            // Red pixel
-            px[1] = px[2]; // Green channel
-            px[0] = px[2]; // Blue channel
+
+            // Green channel
+            px[1] = px[2];
+            
+            // Blue channel
+            px[0] = px[2];
         }
+
         y++;
         for (int x = 0; x < infoHeader.width; x ++) {
+            // B pixel
             uint8_t *px = &pixels[y * rowSize + x * 3];
-            // Blue pixel
+            
+            // Red channel
             px[2] = px[0]; 
+
+            // Green channel
             px[1] = px[0];
 
             x++;
+            // Gb pixel
             px = &pixels[y * rowSize + x * 3];
-            // Green pixel
+            
+            // Red channel
             px[2] = px[1]; 
+
+            // Blue channel
             px[0] = px[1];
         }
     }
 
     // Create a new output file to write the modified image
-    FILE *outFp = fopen("output/encoded.bmp", "wb");
+    FILE *outFp = fopen("output/decoded.bmp", "wb");
     if (!outFp) {
         printf("Error creating output file.\n");
         free(pixels);
