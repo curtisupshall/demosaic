@@ -71,9 +71,10 @@ int main() {
 
     uint8_t *px;
 
+    int y, x;
     // Access pixel values
-    for (int y = 2; y < infoHeader.height - 2; y++) {
-        for (int x = 2; x < infoHeader.width - 2; x ++) {
+    for (y = 2; y < infoHeader.height - 2; y++) {
+        for (x = 2; x < infoHeader.width - 2; x ++) {
             // Gr pixel
             px = &pixels[y * rowSize + x * 3];
 
@@ -106,7 +107,7 @@ int main() {
         }
 
         y++;
-        for (int x = 0; x < infoHeader.width; x ++) {
+        for (x = 0; x < infoHeader.width; x ++) {
             // B pixel
             px = &pixels[y * rowSize + x * 3];
             
