@@ -141,7 +141,7 @@ int main() {
     }
 
     // Create a new output file to write the modified image
-    FILE *outFp = fopen("./output/decoded.bmp", "wb");
+    FILE *outFp = fopen("./decoded.bmp", "wb");
     if (!outFp) {
         printf("Error creating output file.\n");
         free(pixels);
