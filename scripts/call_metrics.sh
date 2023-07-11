@@ -1,7 +1,5 @@
 #!/bin/sh
 
-make clean
-make "-mfloat-abi=softfp -mfpu=neon -static -O3"
-valgrind --tool=callgrind ./demosaic
+valgrind --tool=callgrind ./decode.exe
 callgrind_annotate callgrind.out.*
 rm callgrind.out.*
