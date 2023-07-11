@@ -3,7 +3,7 @@
 echo Copying files to /tmp
 
 mkdir -p /tmp/seng440/
-cp -r ./arm /tmp/seng440/
+cp ./decode.c /tmp/seng440/
 
 echo Compile decode.c to decode.exe
 process_id=$!
