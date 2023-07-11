@@ -31,7 +31,7 @@ typedef struct {
 #pragma pack(pop)
 
 int main() {
-    FILE *fp = fopen("./output/encoded.bmp", "rb");
+    FILE *fp = fopen("./encoded.bmp", "rb");
     if (!fp) {
         printf("Error opening file.\n");
         return 1;
