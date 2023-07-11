@@ -29,4 +29,4 @@ test: $(TEST_OBJ)
 	./test
 
 clean:
-	$(RM) output.bmp demosaic test  *.o
+	$(RM) demosaic test  *.o
