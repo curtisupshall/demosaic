@@ -1,7 +1,7 @@
 # To build for locally run `make CC=clang`
 CC=arm-linux-gcc 
 # These are mostly here to on to cover our buts during the base setup
-CFLAGS= -std=c99 -O3
+CFLAGS= -mfloat-abi=softfp -mfpu=neon -static -O3 
 ASMCFLAGS= -static -S -std=c99 -O3
 LIB = 
 SRC = $(LIB) decode.c #encode.c
