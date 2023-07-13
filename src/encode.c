@@ -29,7 +29,7 @@ typedef struct
 #pragma pack(pop)
 
 int main() {
-    FILE *fp = fopen("./output/output_original.bmp", "rb");
+    FILE *fp = fopen("data/original/_13A0993.bmp", "rb");
     if (!fp) {
         printf("Error opening file.\n");
         return 1;
@@ -108,7 +108,7 @@ int main() {
     }
 
     // Create a new output file to write the modified image
-    FILE *outFp = fopen("output/encoded.bmp", "wb");
+    FILE *outFp = fopen("data/encoded/_13A0993.bmp", "wb");
     if (!outFp)
     {
         printf("Error creating output file.\n");
