@@ -35,14 +35,12 @@ https://en.wikipedia.org/wiki/Demosaicing
 
         - Compile code
             - note: might not have permission: `$ chmod +x ./scripts/compile_file.sh`
-            - Run compile_file.sh: `$ ./scripts/compile_file.sh`
+            - Run compile_file.sh: `$ ./scripts/compile_file.sh basic`
 
     - Connect to Seng 440 ECE PC
         - Refer above `seng440.ece.uvic.ca`
 
-        - Run `$ lftp -u user1,q6coHjd7P @arm`
-
-        - Run `$ mirror -R ./demosaic_arm ./demosaic_arm`
+        - Run `$ lftp -e "mirror -R ./src/compile/" -u user1,q6coHjd7P @arm`
 
         - Exit (Or open another machine)
 
@@ -50,5 +48,5 @@ https://en.wikipedia.org/wiki/Demosaicing
             - `$ telnet arm`
                 - `(user1, user2, user3, user4)`
             - `q6coHjd7P`
-            - `chmod +x decode.exe`
-            - `./decode.exe`
+            - `chmod +x ./compile/basic.exe`
+            - `./compile/basic.exe`
