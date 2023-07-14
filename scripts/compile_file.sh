@@ -2,11 +2,11 @@
 
 echo Copying files to /tmp
 mkdir -p /tmp/seng440/
-cp ./decode.c /tmp/seng440/
+cp ./src/decode.c /tmp/seng440/
 
 echo copy files for arm device to /demosaic_arm
 mkdir -p ./demosaic_arm/
-cp ./output/encoded.bmp ./demosaic_arm/
+cp ./data/encoded/_13A0993.bmp ./demosaic_arm/
 
 echo Compile decode.c to decode.exe
 process_id=$!
