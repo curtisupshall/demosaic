@@ -15,8 +15,8 @@
 
 // Optimization flags
 
-#define OPT_REDUCE_OP_STR
-#define OPT_USE_DIRECTIVES
+//#define OPT_REDUCE_OP_STR
+//#define OPT_USE_DIRECTIVES
 #define OPT_PREFER_CONST_FOLDING
 
 // Macros
@@ -53,7 +53,7 @@ typedef struct {
 #pragma pack(pop)
 
 int main() {
-    FILE *fp = fopen("./data/encoded/cow.bmp", "rb");
+    FILE *fp = fopen("./data/encoded/dog.bmp", "rb");
     if (!fp) {
         printf("Error opening file.\n");
         return 1;
@@ -93,18 +93,18 @@ int main() {
 
     uint8_t *px;
 
-    #ifdef OPT_USE_DIRECTIVES:
+    #ifdef OPT_USE_DIRECTIVES
         register uint32_t x;
         register uint32_t y;
-        register uint8_t tmpR;
-        register uint8_t tmpG;
-        register uint8_t tmpB;
+        register uint32_t tmpR;
+        register uint32_t tmpG;
+        register uint32_t tmpB;
     #else
         uint32_t x;
         uint32_t y;
-        uint8_t tmpR;
-        uint8_t tmpG;
-        uint8_t tmpB;
+        uint32_t tmpR;
+        uint32_t tmpG;
+        uint32_t tmpB;
     #endif
 
     #ifdef OPT_PREFER_CONST_FOLDING
@@ -240,7 +240,7 @@ int main() {
     }
 
     // Create a new output file to write the modified image
-    FILE *outFp = fopen("./data/decoded/cow.bmp", "wb");
+    FILE *outFp = fopen("./data/decoded/dog.bmp", "wb");
     if (!outFp) {
         printf("Error creating output file.\n");
         free(pixels);
