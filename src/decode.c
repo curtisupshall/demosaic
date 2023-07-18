@@ -2,9 +2,31 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define RED 2
-#define GREEN 1
-#define BLUE 0
+#define RED             2
+#define GREEN           1
+#define BLUE            0
+
+#define RED_MINUS_3     -1
+#define RED_PLUS_3      5
+#define BLUE_MINUS_3    -3
+#define BLUE_PLUS_3     3
+#define GREEN_MINUS_3   -2
+#define GREEN_PLUS_3    4
+
+// Optimization flags
+
+#define OPT_REDUCE_OP_STR
+#define OPT_USE_DIRECTIVES
+#define OPT_PREFER_CONST_FOLDING
+
+// Macros
+#ifdef OPT_REDUCE_OP_STR
+    #define DIVIDE_BY_TWO(tmp) (tmp >> 1)
+    #define DIVIDE_BY_FOUR(tmp) (tmp >> 2)
+#else
+    #define DIVIDE_BY_TWO(tmp) (tmp / 2)
+    #define DIVIDE_BY_FOUR(tmp) (tmp / 4)
+#endif
 
 #pragma pack(push, 1)
 typedef struct {
@@ -71,39 +93,116 @@ int main() {
 
     uint8_t *px;
 
-    int y, x;
+    #ifdef OPT_USE_DIRECTIVES:
+        register uint32_t x;
+        register uint32_t y;
+        register uint8_t tmpR;
+        register uint8_t tmpG;
+        register uint8_t tmpB;
+    #else
+        uint32_t x;
+        uint32_t y;
+        uint8_t tmpR;
+        uint8_t tmpG;
+        uint8_t tmpB;
+    #endif
+
+    #ifdef OPT_PREFER_CONST_FOLDING
+        uint32_t rowSizeIndex;
+    #endif
+
     // Access pixel values
     for (y = 2; y < infoHeader.height - 2; y++) {
         for (x = 2; x < infoHeader.width - 2; x ++) {
-            // Gr pixel
-            px = &pixels[y * rowSize + x * 3];
+            /**
+             * --------------------------------------------------------
+             * GR PIXEL
+             * --------------------------------------------------------
+             * 
+             * - Red channel derived from left and right pixels;
+             * - Blue channel derived from above and below pixels
+             */
+            #ifdef OPT_PREFER_CONST_FOLDING
+                rowSizeIndex = y * rowSize;
+                px = &pixels[rowSizeIndex + x * 3];
+            #else
+                px = &pixels[y * rowSize + x * 3];
+            #endif
 
-            // Red channel derived from left and right pixels
-            px[RED] = (pixels[y * rowSize + ((x - 1) * 3) + RED] + pixels[y * rowSize + ((x + 1) * 3) + RED]) / 2;
-            
-            // Blue channel derived from above and below pixels
-            px[BLUE] = (pixels[(y + 1) * rowSize + (x * 3) + BLUE] + pixels[(y - 1) * rowSize + (x * 3) + BLUE]) / 2;
+            // Interpolate Red channel
+            #ifdef OPT_PREFER_CONST_FOLDING
+                tmpR = pixels[rowSizeIndex + 3 * x + RED_MINUS_3] + pixels[rowSizeIndex + 3 * x + RED_PLUS_3];
+            #else
+                tmpR = pixels[y * rowSize + ((x - 1) * 3) + RED] + pixels[y * rowSize + ((x + 1) * 3) + RED];
+            #endif
+            tmpR = DIVIDE_BY_TWO(tmpR);
+
+            // Interpolate Blue channel
+            #ifdef OPT_PREFER_CONST_FOLDING
+                tmpB = pixels[rowSizeIndex + rowSize + (x * 3) + BLUE] + pixels[rowSizeIndex - rowSize + 3 * x + BLUE];
+            #else
+                tmpB = pixels[(y + 1) * rowSize + (x * 3) + BLUE] + pixels[(y - 1) * rowSize + 3 * x + BLUE];
+            #endif
+            tmpB = DIVIDE_BY_TWO(tmpB);
+
+            px[RED] = tmpR;
+            px[BLUE] = tmpB;
 
             x++;
 
-            // R pixel
-            px = &pixels[y * rowSize + x * 3];
+            /**
+             * --------------------------------------------------------
+             * R PIXEL
+             * --------------------------------------------------------
+             * 
+             * - Green channel derived form four adjacent green pixels
+             * - Blue channel derived from four diagonal neighbouring blue pixels
+             */
+            #ifdef OPT_PREFER_CONST_FOLDING
+                rowSizeIndex = y * rowSize;
+                px = &pixels[rowSizeIndex + x * 3];
+            #else
+                px = &pixels[y * rowSize + x * 3];
+            #endif
 
-            // Green channel derived form four adjacent green pixels
-            px[GREEN] = (
-                pixels[(y + 1) * rowSize + (x * 3) + GREEN] +
-                pixels[(y - 1) * rowSize + (x * 3) + GREEN] +
-                pixels[y * rowSize + ((x - 1) * 3) + GREEN] +
-                pixels[y * rowSize + ((x + 1) * 3) + GREEN]
-            ) / 4;
+            // Interpolate Green channel
+            #ifdef OPT_PREFER_CONST_FOLDING
+                tmpG = (
+                    pixels[rowSizeIndex + rowSize + 3 * x + GREEN] +
+                    pixels[rowSizeIndex - rowSize + 3 * x + GREEN] +
+                    pixels[rowSizeIndex + 3 * x GREEN_MINUS_3]     +
+                    pixels[rowSizeIndex + 3 * x + GREEN_PLUS_3]
+                );
+            #else
+                tmpG = (
+                    pixels[(y + 1) * rowSize + (x * 3) + GREEN] +
+                    pixels[(y - 1) * rowSize + (x * 3) + GREEN] +
+                    pixels[y * rowSize + ((x - 1) * 3) + GREEN] +
+                    pixels[y * rowSize + ((x + 1) * 3) + GREEN]
+                );
+            #endif
+            tmpG = DIVIDE_BY_FOUR(tmpG);
 
-            // Blue channel derived from four diagonal neighbouring blue pixels
-            px[BLUE] = (
-                pixels[(y + 1) * rowSize + ((x - 1) * 3) + BLUE] +
-                pixels[(y + 1) * rowSize + ((x + 1) * 3) + BLUE] +
-                pixels[(y - 1) * rowSize + ((x - 1) * 3) + BLUE] +
-                pixels[(y - 1) * rowSize + ((x + 1) * 3) + BLUE]
-            ) / 4;
+            // Interpolate Blue channel
+            #ifdef OPT_PREFER_CONST_FOLDING
+                tmpB = (
+                    pixels[rowSizeIndex + rowSize + 3 * x + BLUE_MINUS_3] +
+                    pixels[rowSizeIndex + rowSize + 3 * x + BLUE_PLUS_3]  +
+                    pixels[rowSizeIndex - rowSize + 3 * x + BLUE_MINUS_3] +
+                    pixels[rowSizeIndex - rowSize + 3 * x + BLUE_PLUS_3]
+                );
+            #else
+                tmpB = (
+                    pixels[(y + 1) * rowSize + ((x - 1) * 3) + BLUE] +
+                    pixels[(y + 1) * rowSize + ((x + 1) * 3) + BLUE] +
+                    pixels[(y - 1) * rowSize + ((x - 1) * 3) + BLUE] +
+                    pixels[(y - 1) * rowSize + ((x + 1) * 3) + BLUE]
+                );
+            #endif
+            tmpB = DIVIDE_BY_FOUR(tmpB);
+
+            px[GREEN] = tmpG;
+            px[BLUE] = tmpB;
         }
 
         y++;
