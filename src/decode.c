@@ -14,10 +14,19 @@
 #define GREEN_PLUS_3    4
 
 // Optimization flags
+#define VERSION 4
 
-//#define OPT_REDUCE_OP_STR
-//#define OPT_USE_DIRECTIVES
-#define OPT_PREFER_CONST_FOLDING
+#if VERSION >= 4
+    #define OPT_PREFER_CONST_FOLDING
+#endif
+
+#if VERSION >= 3
+    #define OPT_REDUCE_OP_STR
+#endif
+
+#if VERSION >= 2
+    #define OPT_USE_DIRECTIVES
+#endif
 
 // Macros
 #ifdef OPT_REDUCE_OP_STR
@@ -53,7 +62,7 @@ typedef struct {
 #pragma pack(pop)
 
 int main() {
-    FILE *fp = fopen("./data/encoded/dog.bmp", "rb");
+    FILE *fp = fopen("./data/encoded/beach.bmp", "rb");
     if (!fp) {
         printf("Error opening file.\n");
         return 1;
@@ -120,7 +129,8 @@ int main() {
              * --------------------------------------------------------
              * 
              * - Red channel derived from left and right pixels;
-             * - Blue channel derived from above and below pixels
+             * - Blue channel derived from above and below pixels;
+             *
              */
             #ifdef OPT_PREFER_CONST_FOLDING
                 rowSizeIndex = y * rowSize;
@@ -131,17 +141,29 @@ int main() {
 
             // Interpolate Red channel
             #ifdef OPT_PREFER_CONST_FOLDING
-                tmpR = pixels[rowSizeIndex + 3 * x + RED_MINUS_3] + pixels[rowSizeIndex + 3 * x + RED_PLUS_3];
+                tmpR = (
+                    pixels[rowSizeIndex + 3 * x + RED_MINUS_3] +
+                    pixels[rowSizeIndex + 3 * x + RED_PLUS_3]
+                );
             #else
-                tmpR = pixels[y * rowSize + ((x - 1) * 3) + RED] + pixels[y * rowSize + ((x + 1) * 3) + RED];
+                tmpR = (
+                    pixels[y * rowSize + ((x - 1) * 3) + RED] +
+                    pixels[y * rowSize + ((x + 1) * 3) + RED]
+                );
             #endif
             tmpR = DIVIDE_BY_TWO(tmpR);
 
             // Interpolate Blue channel
             #ifdef OPT_PREFER_CONST_FOLDING
-                tmpB = pixels[rowSizeIndex + rowSize + (x * 3) + BLUE] + pixels[rowSizeIndex - rowSize + 3 * x + BLUE];
+                tmpB = (
+                    pixels[rowSizeIndex + rowSize + (x * 3) + BLUE] +
+                    pixels[rowSizeIndex - rowSize + 3 * x + BLUE]
+                );
             #else
-                tmpB = pixels[(y + 1) * rowSize + (x * 3) + BLUE] + pixels[(y - 1) * rowSize + 3 * x + BLUE];
+                tmpB = (
+                    pixels[(y + 1) * rowSize + (x * 3) + BLUE] +
+                    pixels[(y - 1) * rowSize + 3 * x + BLUE]
+                );
             #endif
             tmpB = DIVIDE_BY_TWO(tmpB);
 
@@ -155,8 +177,9 @@ int main() {
              * R PIXEL
              * --------------------------------------------------------
              * 
-             * - Green channel derived form four adjacent green pixels
-             * - Blue channel derived from four diagonal neighbouring blue pixels
+             * - Green channel derived form four adjacent green pixels;
+             * - Blue channel derived from four diagonal neighbouring blue pixels;
+             *
              */
             #ifdef OPT_PREFER_CONST_FOLDING
                 rowSizeIndex = y * rowSize;
@@ -206,41 +229,115 @@ int main() {
         }
 
         y++;
-        for (x = 0; x < infoHeader.width; x ++) {
-            // B pixel
-            px = &pixels[y * rowSize + x * 3];
+        for (x = 2; x < infoHeader.width - 2; x ++) {
+            /**
+             * --------------------------------------------------------
+             * B PIXEL
+             * --------------------------------------------------------
+             * 
+             * - Red channel derived from four diagonal neighbouring red pixels;
+             * - Green channel derived form four adjacent green pixels;
+             *
+             */
+            #ifdef OPT_PREFER_CONST_FOLDING
+                rowSizeIndex = y * rowSize;
+                px = &pixels[rowSizeIndex + x * 3];
+            #else
+                px = &pixels[y * rowSize + x * 3];
+            #endif
             
-            // Red channel derived from four diagonal neighbouring red pixels
-            px[RED] = (
-                pixels[(y + 1) * rowSize + ((x - 1) * 3) + RED] +
-                pixels[(y + 1) * rowSize + ((x + 1) * 3) + RED] +
-                pixels[(y - 1) * rowSize + ((x - 1) * 3) + RED] +
-                pixels[(y - 1) * rowSize + ((x + 1) * 3) + RED]
-            ) / 4;
+            // Interpolate Red channel
+            #ifdef OPT_PREFER_CONST_FOLDING
+                tmpR = (
+                    pixels[rowSizeIndex + rowSize + 3 * x + RED_MINUS_3] +
+                    pixels[rowSizeIndex + rowSize + 3 * x + RED_PLUS_3]  +
+                    pixels[rowSizeIndex - rowSize + 3 * x + RED_MINUS_3] +
+                    pixels[rowSizeIndex - rowSize + 3 * x + RED_PLUS_3]
+                );
+            #else
+                tmpR = (
+                    pixels[(y + 1) * rowSize + ((x - 1) * 3) + RED] +
+                    pixels[(y + 1) * rowSize + ((x + 1) * 3) + RED] +
+                    pixels[(y - 1) * rowSize + ((x - 1) * 3) + RED] +
+                    pixels[(y - 1) * rowSize + ((x + 1) * 3) + RED]
+                );
+            #endif
+            tmpR = DIVIDE_BY_FOUR(tmpR);
 
-            // Green channel derived form four adjacent green pixels
-            px[GREEN] = (
-                pixels[(y + 1) * rowSize + (x * 3) + GREEN] +
-                pixels[(y - 1) * rowSize + (x * 3) + GREEN] +
-                pixels[y * rowSize + ((x - 1) * 3) + GREEN] +
-                pixels[y * rowSize + ((x + 1) * 3) + GREEN]
-            ) / 4;
+            // Interpolate Green channel
+            #ifdef OPT_PREFER_CONST_FOLDING
+                tmpG = (
+                    pixels[rowSizeIndex + rowSize + 3 * x + GREEN] +
+                    pixels[rowSizeIndex - rowSize + 3 * x + GREEN] +
+                    pixels[rowSizeIndex + ((x - 1) * 3) + GREEN]   +
+                    pixels[rowSizeIndex + ((x + 1) * 3) + GREEN]
+                );
+            #else
+                tmpG = (
+                    pixels[(y + 1) * rowSize + 3 * x + GREEN] +
+                    pixels[(y - 1) * rowSize + 3 * x + GREEN] +
+                    pixels[y * rowSize + ((x - 1) * 3) + GREEN] +
+                    pixels[y * rowSize + ((x + 1) * 3) + GREEN]
+                );
+            #endif
+            tmpG = DIVIDE_BY_FOUR(tmpG);
+
+            px[RED] = tmpR;
+            px[GREEN] = tmpG;
 
             x++;
 
-            // Gb pixel
-            px = &pixels[y * rowSize + x * 3];
+            /**
+             * --------------------------------------------------------
+             * GB PIXEL
+             * --------------------------------------------------------
+             * 
+             * - Red channel derived from above and below pixels
+             * - Blue channel derived from left and right pixels
+             *
+             */
+            #ifdef OPT_PREFER_CONST_FOLDING
+                rowSizeIndex = y * rowSize;
+                px = &pixels[rowSizeIndex + x * 3];
+            #else
+                px = &pixels[y * rowSize + x * 3];
+            #endif
             
-            // Red channel derived from above and below pixels
-            px[RED] = (pixels[(y + 1) * rowSize + (x * 3) + RED] + pixels[(y - 1) * rowSize + (x * 3) + RED]) / 2;
+            // Interpolate Red channel
+            #ifdef OPT_PREFER_CONST_FOLDING
+                tmpR = (
+                    pixels[rowSizeIndex + rowSize + (x * 3) + RED] +
+                    pixels[rowSizeIndex - rowSize + (x * 3) + RED]
+                );
+            #else
+                tmpR = (
+                    pixels[(y + 1) * rowSize + (x * 3) + RED] +
+                    pixels[(y - 1) * rowSize + (x * 3) + RED]
+                );
+            #endif
+            tmpR = DIVIDE_BY_TWO(tmpR);
 
-            // Blue channel derived from left and right pixels
-            px[BLUE] = (pixels[y * rowSize + ((x - 1) * 3) + BLUE] + pixels[y * rowSize + ((x + 1) * 3) + BLUE]) / 2;
+            // Interpolate Blue channel
+            #ifdef OPT_PREFER_CONST_FOLDING
+                tmpB = (
+                    pixels[rowSizeIndex + 3 * x + BLUE_MINUS_3] +
+                    pixels[rowSizeIndex + 3 * x + BLUE_PLUS_3]
+                );
+            #else
+                tmpB = (
+                    pixels[y * rowSize + ((x - 1) * 3) + BLUE] +
+                    pixels[y * rowSize + ((x + 1) * 3) + BLUE]
+                );
+            #endif
+            tmpB = DIVIDE_BY_TWO(tmpB);
+
+            px[RED] = tmpR;
+            px[BLUE] = tmpB;
         }
     }
 
     // Create a new output file to write the modified image
-    FILE *outFp = fopen("./data/decoded/dog.bmp", "wb");
+    FILE *outFp = fopen("./data/decoded/beach.bmp", "wb");
     if (!outFp) {
         printf("Error creating output file.\n");
         free(pixels);
