@@ -151,7 +151,6 @@ int main() {
                     pixels[y * rowSize + ((x + 1) * 3) + RED]
                 );
             #endif
-            tmpR = DIVIDE_BY_TWO(tmpR);
 
             // Interpolate Blue channel
             #ifdef OPT_PREFER_CONST_FOLDING
@@ -165,8 +164,9 @@ int main() {
                     pixels[(y - 1) * rowSize + 3 * x + BLUE]
                 );
             #endif
-            tmpB = DIVIDE_BY_TWO(tmpB);
 
+            tmpR = DIVIDE_BY_TWO(tmpR);
+            tmpB = DIVIDE_BY_TWO(tmpB);
             px[RED] = tmpR;
             px[BLUE] = tmpB;
 
@@ -204,7 +204,6 @@ int main() {
                     pixels[y * rowSize + ((x + 1) * 3) + GREEN]
                 );
             #endif
-            tmpG = DIVIDE_BY_FOUR(tmpG);
 
             // Interpolate Blue channel
             #ifdef OPT_PREFER_CONST_FOLDING
@@ -222,8 +221,9 @@ int main() {
                     pixels[(y - 1) * rowSize + ((x + 1) * 3) + BLUE]
                 );
             #endif
+            
+            tmpG = DIVIDE_BY_FOUR(tmpG);
             tmpB = DIVIDE_BY_FOUR(tmpB);
-
             px[GREEN] = tmpG;
             px[BLUE] = tmpB;
         }
@@ -262,7 +262,6 @@ int main() {
                     pixels[(y - 1) * rowSize + ((x + 1) * 3) + RED]
                 );
             #endif
-            tmpR = DIVIDE_BY_FOUR(tmpR);
 
             // Interpolate Green channel
             #ifdef OPT_PREFER_CONST_FOLDING
@@ -280,8 +279,9 @@ int main() {
                     pixels[y * rowSize + ((x + 1) * 3) + GREEN]
                 );
             #endif
-            tmpG = DIVIDE_BY_FOUR(tmpG);
 
+            tmpR = DIVIDE_BY_FOUR(tmpR);
+            tmpG = DIVIDE_BY_FOUR(tmpG);
             px[RED] = tmpR;
             px[GREEN] = tmpG;
 
@@ -315,7 +315,6 @@ int main() {
                     pixels[(y - 1) * rowSize + (x * 3) + RED]
                 );
             #endif
-            tmpR = DIVIDE_BY_TWO(tmpR);
 
             // Interpolate Blue channel
             #ifdef OPT_PREFER_CONST_FOLDING
@@ -329,8 +328,9 @@ int main() {
                     pixels[y * rowSize + ((x + 1) * 3) + BLUE]
                 );
             #endif
+    
+            tmpR = DIVIDE_BY_TWO(tmpR);
             tmpB = DIVIDE_BY_TWO(tmpB);
-
             px[RED] = tmpR;
             px[BLUE] = tmpB;
         }
