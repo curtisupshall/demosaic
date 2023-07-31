@@ -48,9 +48,13 @@ https://en.wikipedia.org/wiki/Demosaicing
             - `$ telnet arm`
                 - `(user1, user2, user3, user4)`
             - `q6coHjd7P`
-            - `chmod +x ./demosaic_arm/decode.exe`
-            - `./demosaic_arm/decode.exe`
+            - `cd ./demosaic_arm`
+            - `chmod +x ./decode.exe`
+            - `./decode.exe`
 
     - To get image of Arm device,
-        -Run `$ lftp -e "get ./demosaic_arm/_#####_decoded.bmp" -u user1,q6coHjd7P @arm`
+        -Run `$ lftp -e "mirror -c ./demosaic_arm/" -u user1,q6coHjd7P @arm`
         -Image should be viewable through the mobaxterm file system
+
+    - To get pg stats:
+        - Run `$ gprof decode.exe gmon.out > analysis.txt`
