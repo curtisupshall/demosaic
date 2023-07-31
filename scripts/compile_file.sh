@@ -6,7 +6,7 @@ cp ./src/decode.c /tmp/demosaic440/
 
 echo copy files for arm device to /demosaic_arm
 mkdir -p ./demosaic_arm/
-cp ./data/encoded/cow.bmp ./demosaic_arm/encoded.bmp
+cp ./data/encoded/$1.bmp ./demosaic_arm/encoded.bmp
 
 echo Compile decode.c to decode.exe
 process_id=$!
