@@ -57,4 +57,4 @@ https://en.wikipedia.org/wiki/Demosaicing
         -Image should be viewable through the mobaxterm file system
 
     - To get pg stats:
-        - Run `$ gprof ./demosaic_arm/decode.exe ./demosaic_arm/gmon.out > ./demosaic_arm/analysis.txt`
+        - Run `$ gprof -b ./demosaic_arm/decode.exe ./demosaic_arm/gmon.out > ./demosaic_arm/analysis.txt`
