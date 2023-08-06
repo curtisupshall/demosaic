@@ -62,7 +62,7 @@ typedef struct {
 #pragma pack(pop)
 
 int main() {
-    FILE *fp = fopen("./data/encoded/beach.bmp", "rb");
+    FILE *fp = fopen("./data/encoded/candy.bmp", "rb");
     if (!fp) {
         printf("Error opening file.\n");
         return 1;
@@ -92,39 +92,37 @@ int main() {
     // Calculate the row size in bytes (including padding)
     uint32_t rowSize = ((infoHeader.width * 3 + 3) & ~3);
 
+
     // Allocate memory for the pixel data
-    uint8_t *pixels = (uint8_t*)malloc(rowSize * infoHeader.height);
+    uint32_t *pixels = (uint32_t*)malloc(rowSize * infoHeader.height);
 
     // Read the pixel data
     fread(pixels, rowSize * infoHeader.height, 1, fp);
 
     fclose(fp);
 
-    uint8_t *px;
+    exit(0);
 
 
-    uint32_t x;
-    uint32_t y;
-    uint32_t ch1;
-    //uint32_t ch1_dirty;
-    uint32_t ch2;
-    //uint32_t ch2_dirty;
-    uint32_t tmp1;
-    uint32_t tmp2;
-    uint32_t k1;
-    uint32_t k2;
-    uint32_t k3;
+    register uint32_t x;
+    register uint32_t y;
+    register uint32_t ch1;
+    register uint32_t ch2;
+    register uint32_t tmp1;
+    register uint32_t tmp2;
+    register uint32_t k1;
+    register uint32_t k2;
+    register uint32_t k3;
 
-    uint32_t rowSizeIndex;
+        
 
-    // Access pixel values
-    for (y = 0; y < infoHeader.height; y++) {
-        rowSizeIndex = y * rowSize;
-        k1 = *(uint32_t*)pixels[rowSizeIndex];
-        k2 = *(uint32_t*)pixels[rowSizeIndex + 4];
-        k3 = *(uint32_t*)pixels[rowSizeIndex + 8];
+    for (y = 0; y < 20; y += 2) {
+        // Loop prologue
+        x = 0;
+        k1 = pixels[y * rowSize];
+        k2 = pixels[y * rowSize + 4];
+        k3 = pixels[y * rowSize + 8];
 
-        x = 12;
 
         // Read k1[3] into ch2
         ch2 = k1;
@@ -139,12 +137,14 @@ int main() {
         tmp2 << 12;
         k1 = k1 & tmp2;
 
-        // Advance k1
-        *(uint32_t*)pixels[rowSizeIndex] = k1; // Write k1
-        k1 = *(uint32_t*)pixels[rowSizeIndex + 12]; // Read into k1
+        /*
+        for (x = 0; x < 5; x ++) {
+            
+            continue;
 
-        for (x = 4; x; x += 12) {
-
+            // Advance k1
+            *(uint32_t*)pixels[y * rowSize + 12 * x] = k1; // Write k1 into memory
+            k1 = *(uint32_t*)pixels[y * rowSize + 12 * x + 12]; // Read into k1
 
             // Read k2[3] into ch1
             tmp1 = ch1; // Copy ch1 into tmp1 to perform sum
@@ -176,8 +176,8 @@ int main() {
             k2 = k2 & tmp2;
 
             // Advance k2
-            *(uint32_t*)pixels[rowSizeIndex + x] = k2; // Write k2
-            k2 = *(uint32_t*)pixels[rowSizeIndex + x + 12]; // Read into k2
+            *(uint32_t*)pixels[y * rowSize + 12 * x + 4] = k2; // Write k2 to memory
+            k2 = *(uint32_t*)pixels[y * rowSize + 12 * x + 12 + 4]; // Read into k2
 
             // Read k1[1] into ch1
             tmp1 = ch1;
@@ -204,132 +204,19 @@ int main() {
             k1 = k1 & tmp1;
 
             // Advance k3
-            *(uint32_t*)pixels[rowSizeIndex + x + 4] = k3; // Write k3
-            k3 = *(uint32_t*)pixels[rowSizeIndex + x + 4 + 12]; // Read into k3
+            *(uint32_t*)pixels[y * rowSize + 12 * x + 8] = k3; // Write k3
+            k3 = *(uint32_t*)pixels[y * rowSize + 12 * x + 8 + 12]; // Read into k3
+
 
 
         }
 
-
-
-        
-        
-        for (x = 0; x < infoHeader.width; x ++) {
-            px = &pixels[rowSizeIndex + x * 3];
-            
-
-        }
-
-        y++;
-        for (x = 0; x < infoHeader.width - 2; x ++) {
-            /**
-             * --------------------------------------------------------
-             * B PIXEL
-             * --------------------------------------------------------
-             * 
-             * - Red channel derived from four diagonal neighbouring red pixels;
-             * - Green channel derived form four adjacent green pixels;
-             *
-             */
-            #ifdef OPT_PREFER_CONST_FOLDING
-                rowSizeIndex = y * rowSize;
-                px = &pixels[rowSizeIndex + x * 3];
-            #else
-                px = &pixels[y * rowSize + x * 3];
-            #endif
-            
-            // Interpolate Red channel
-            #ifdef OPT_PREFER_CONST_FOLDING
-                tmpR = (
-                    pixels[rowSizeIndex + rowSize + 3 * x + RED_MINUS_3] +
-                    pixels[rowSizeIndex + rowSize + 3 * x + RED_PLUS_3]  +
-                    pixels[rowSizeIndex - rowSize + 3 * x + RED_MINUS_3] +
-                    pixels[rowSizeIndex - rowSize + 3 * x + RED_PLUS_3]
-                );
-            #else
-                tmpR = (
-                    pixels[(y + 1) * rowSize + ((x - 1) * 3) + RED] +
-                    pixels[(y + 1) * rowSize + ((x + 1) * 3) + RED] +
-                    pixels[(y - 1) * rowSize + ((x - 1) * 3) + RED] +
-                    pixels[(y - 1) * rowSize + ((x + 1) * 3) + RED]
-                );
-            #endif
-
-            // Interpolate Green channel
-            #ifdef OPT_PREFER_CONST_FOLDING
-                tmpG = (
-                    pixels[rowSizeIndex + rowSize + 3 * x + GREEN] +
-                    pixels[rowSizeIndex - rowSize + 3 * x + GREEN] +
-                    pixels[rowSizeIndex + ((x - 1) * 3) + GREEN]   +
-                    pixels[rowSizeIndex + ((x + 1) * 3) + GREEN]
-                );
-            #else
-                tmpG = (
-                    pixels[(y + 1) * rowSize + 3 * x + GREEN] +
-                    pixels[(y - 1) * rowSize + 3 * x + GREEN] +
-                    pixels[y * rowSize + ((x - 1) * 3) + GREEN] +
-                    pixels[y * rowSize + ((x + 1) * 3) + GREEN]
-                );
-            #endif
-
-            tmpR = DIVIDE_BY_FOUR(tmpR);
-            tmpG = DIVIDE_BY_FOUR(tmpG);
-            px[RED] = tmpR;
-            px[GREEN] = tmpG;
-
-            x++;
-
-            /**
-             * --------------------------------------------------------
-             * GB PIXEL
-             * --------------------------------------------------------
-             * 
-             * - Red channel derived from above and below pixels
-             * - Blue channel derived from left and right pixels
-             *
-             */
-            #ifdef OPT_PREFER_CONST_FOLDING
-                rowSizeIndex = y * rowSize;
-                px = &pixels[rowSizeIndex + x * 3];
-            #else
-                px = &pixels[y * rowSize + x * 3];
-            #endif
-            
-            // Interpolate Red channel
-            #ifdef OPT_PREFER_CONST_FOLDING
-                tmpR = (
-                    pixels[rowSizeIndex + rowSize + (x * 3) + RED] +
-                    pixels[rowSizeIndex - rowSize + (x * 3) + RED]
-                );
-            #else
-                tmpR = (
-                    pixels[(y + 1) * rowSize + (x * 3) + RED] +
-                    pixels[(y - 1) * rowSize + (x * 3) + RED]
-                );
-            #endif
-
-            // Interpolate Blue channel
-            #ifdef OPT_PREFER_CONST_FOLDING
-                tmpB = (
-                    pixels[rowSizeIndex + 3 * x + BLUE_MINUS_3] +
-                    pixels[rowSizeIndex + 3 * x + BLUE_PLUS_3]
-                );
-            #else
-                tmpB = (
-                    pixels[y * rowSize + ((x - 1) * 3) + BLUE] +
-                    pixels[y * rowSize + ((x + 1) * 3) + BLUE]
-                );
-            #endif
+        */
     
-            tmpR = DIVIDE_BY_TWO(tmpR);
-            tmpB = DIVIDE_BY_TWO(tmpB);
-            px[RED] = tmpR;
-            px[BLUE] = tmpB;
-        }
     }
 
     // Create a new output file to write the modified image
-    FILE *outFp = fopen("./data/decoded/beach.bmp", "wb");
+    FILE *outFp = fopen("./data/decoded/candy.bmp", "wb");
     if (!outFp) {
         printf("Error creating output file.\n");
         free(pixels);
