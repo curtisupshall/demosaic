@@ -101,8 +101,6 @@ int main() {
 
     fclose(fp);
 
-    exit(0);
-
 
     register uint32_t x;
     register uint32_t y;
@@ -122,6 +120,7 @@ int main() {
         k1 = pixels[y * rowSize];
         k2 = pixels[y * rowSize + 4];
         k3 = pixels[y * rowSize + 8];
+        printf("k1, k2, k3 = %x%x%x\n", k1, k2, k3);
 
 
         // Read k1[3] into ch2
@@ -137,14 +136,12 @@ int main() {
         tmp2 << 12;
         k1 = k1 & tmp2;
 
-        /*
-        for (x = 0; x < 5; x ++) {
-            
-            continue;
-
+        for (x = 0; x < infoHeader.width / 12; x ++) {
             // Advance k1
-            *(uint32_t*)pixels[y * rowSize + 12 * x] = k1; // Write k1 into memory
-            k1 = *(uint32_t*)pixels[y * rowSize + 12 * x + 12]; // Read into k1
+            pixels[y * rowSize + 12 * x] = k1; // Write k1 into memory
+            
+            k1 = pixels[y * rowSize + 12 * x + 12]; // Read into k1
+            // exit(0);
 
             // Read k2[3] into ch1
             tmp1 = ch1; // Copy ch1 into tmp1 to perform sum
@@ -176,8 +173,8 @@ int main() {
             k2 = k2 & tmp2;
 
             // Advance k2
-            *(uint32_t*)pixels[y * rowSize + 12 * x + 4] = k2; // Write k2 to memory
-            k2 = *(uint32_t*)pixels[y * rowSize + 12 * x + 12 + 4]; // Read into k2
+            pixels[y * rowSize + 12 * x + 4] = k2; // Write k2 to memory
+            k2 = pixels[y * rowSize + 12 * x + 12 + 4]; // Read into k2
 
             // Read k1[1] into ch1
             tmp1 = ch1;
@@ -204,14 +201,12 @@ int main() {
             k1 = k1 & tmp1;
 
             // Advance k3
-            *(uint32_t*)pixels[y * rowSize + 12 * x + 8] = k3; // Write k3
-            k3 = *(uint32_t*)pixels[y * rowSize + 12 * x + 8 + 12]; // Read into k3
+            pixels[y * rowSize + 12 * x + 8] = k3; // Write k3
+            k3 = pixels[y * rowSize + 12 * x + 8 + 12]; // Read into k3
 
 
 
         }
-
-        */
     
     }
 
