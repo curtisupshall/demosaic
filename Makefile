@@ -1,8 +1,8 @@
 encode:
-	gcc src/encode.c -o encode.exe && ./encode.exe
+	gcc src/encode.c -g -o encode.exe && ./encode.exe
 
 decode:
-	gcc src/decode.c -o decode.exe && ./decode.exe
+	gcc src/decode.c -g -o decode.exe && ./decode.exe
 
 clean:
 
