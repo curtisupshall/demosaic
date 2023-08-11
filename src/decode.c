@@ -90,7 +90,7 @@ int main() {
     }
 
     // Calculate the row size in bytes (including padding)
-    uint32_t rowSize = ((infoHeader.width * 3 + 3) & ~3);
+    uint32_t rowSize = ((infoHeader.width * 3 + 3) & ~3) / 12;
 
 
     // Allocate memory for the pixel data
@@ -102,17 +102,17 @@ int main() {
     fclose(fp);
 
 
-    register uint32_t x;
-    register uint32_t y;
+    uint32_t x;
+    uint32_t y;
 
-    register uint32_t ch1;
-    register uint32_t ch2;
-    register uint32_t tmp1;
-    register uint32_t tmp2;
+    uint32_t ch1;
+    uint32_t ch2;
+    uint32_t tmp1;
+    uint32_t tmp2;
 
-    register uint32_t k1;
-    register uint32_t k2;
-    register uint32_t k3;
+    uint32_t k1;
+    uint32_t k2;
+    uint32_t k3;
 
         
     /**
@@ -125,7 +125,7 @@ int main() {
      * 
      *   --> For GR rows, use ch1 for green, ch2 for red.
      */
-    for (y = 0; y < 20; y += 2) {
+    for (y = 0; y < 50; y += 2) {
         // Loop prologue
         k1 = pixels[y * rowSize];
         k2 = pixels[y * rowSize + 1];
@@ -134,13 +134,13 @@ int main() {
         // 0. Read K2[R0] into ch2
         ch2 = k2;
         ch2 = ch2 & 0x0000FF00;
-        ch2 = ch2 >> 4;
+        ch2 = ch2 >> 8;
 
         // 0. Preload ch1 with K1[G0]
-        tmp1 = k1;
-        tmp1 = tmp1 >> 8;
+        ch1 = k1;
+        ch1 = ch1 >> 8;
 
-        for (x = 0; x < infoHeader.width / 12; x ++) {
+        for (x = 0; x < infoHeader.width / 3 - 1; x ++) {
             // 1. Read K2[R0] into ch2
             tmp2 = ch2;
             ch2 = k2;
@@ -152,11 +152,11 @@ int main() {
             tmp2 = tmp2 >> 1; // Divide by 2
             tmp2 = tmp2 << 16;
             k1 = k1 & 0xFF00FFFF;
-            k1 = k1 & tmp2;
+            k1 = k1 | tmp2;
 
             // 3. Advance K1.
-            pixels[y * rowSize + 12 * x] = k1; // Write K1 back to memory
-            k1 = pixels[y * rowSize + 12 * x + 12]; // Read into K1
+            pixels[(y * rowSize) + (3 * x)] = k1; // Write K1 back to memory
+            k1 = pixels[(y * rowSize) + (3 * x) + 3]; // Read into K1
 
             // 4. Read K2[G1] into ch1
             tmp1 = ch1; // Copy ch1 into tmp1 to perform sum
@@ -168,16 +168,24 @@ int main() {
             // 5. Write ch1 to K2[G0]
             tmp1 = tmp1 >> 1; // Divide by 2
             k2 = k2 & 0xFFFFFF00; // TODO not needed?
-            k2 = k2 & tmp1;
+            k2 = k2 | tmp1;
 
             // 6. Advance K2
-            pixels[y * rowSize + 12 * x + 4] = k2; // Write k2 to memory
-            k2 = pixels[y * rowSize + 12 * x + 12 + 4]; // Read into k2
+            pixels[(y * rowSize) + (3 * x) + 1] = k2; // Write k2 to memory
+            k2 = pixels[(y * rowSize) + (3 * x) + 3 + 1]; // Read into k2
 
             // 7. Read K1[G0] into ch1
+            tmp1 = ch1;
+            ch1 = k1;
+            ch1 = ch1 >> 8;
+            ch1 = ch1 & 0x000000FF;
+            tmp1 = tmp1 + ch1;
+
+            /*
             tmp1 = k1;
             tmp1 = tmp1 >> 8;
             tmp1 = tmp1 & 0x000000FF;
+            */
 
             // 8. Read K3[R1] into ch2
             tmp2 = ch2;
@@ -189,23 +197,24 @@ int main() {
             // 9. Write ch2 to K3[R0]
             tmp2 = tmp2 >> 1; // Divide by 2
             k3 = k3 & 0xFFFFFF00; // TODO not needed?
-            k3 = k3 & tmp2;
+            k3 = k3 | tmp2;
 
             // 10. Read K1[G0] into ch1
             tmp1 = ch1;
             ch1 = k1;
             ch1 = ch1 >> 8;
             ch1 = ch1 & 0x000000FF;
+            tmp1 = tmp1 + ch1;
             
             // 11. Write ch1 to K3[G1]
             tmp1 = tmp1 >> 1; // Divide by 2
             tmp1 = tmp1 << 16;
             k3 = k3 & 0xFF00FFFF; // TODO not needed?
-            k3 = k3 & tmp1;
+            k3 = k3 | tmp1;
 
             // 12. Advance k3
-            pixels[y * rowSize + 12 * x + 8] = k3; // Write k3
-            k3 = pixels[y * rowSize + 12 * x + 8 + 12]; // Read into k3
+            pixels[(y * rowSize) + (3 * x) + 2] = k3; // Write k3
+            k3 = pixels[(y * rowSize) + (3 * x) + 3 + 2]; // Read into k3
         }
     }
 
