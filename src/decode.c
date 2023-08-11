@@ -62,7 +62,7 @@ typedef struct {
 #pragma pack(pop)
 
 int main() {
-    FILE *fp = fopen("./data/encoded/candy.bmp", "rb");
+    FILE *fp = fopen("data/encoded/candy.bmp", "rb");
     if (!fp) {
         printf("Error opening file.\n");
         return 1;
@@ -133,25 +133,25 @@ int main() {
 
         // 0. Read K2[R0] into ch2
         ch2 = k2;
-        ch2 = ch2 & 0x00F0;
+        ch2 = ch2 & 0x0000FF00;
         ch2 = ch2 >> 4;
 
         // 0. Preload ch1 with K1[G0]
         tmp1 = k1;
-        tmp1 = tmp1 >> 4;
+        tmp1 = tmp1 >> 8;
 
         for (x = 0; x < infoHeader.width / 12; x ++) {
             // 1. Read K2[R0] into ch2
             tmp2 = ch2;
             ch2 = k2;
-            ch2 = ch2 & 0x00F0;
-            ch2 = ch2 >> 4;
+            ch2 = ch2 & 0x0000FF00;
+            ch2 = ch2 >> 8;
             tmp2 = tmp2 + ch2; // Combine ch2
 
             // 2. Write ch2 to K1[R0].
-            tmp2 = tmp2 > 1; // Divide by 2
-            tmp2 = tmp2 << 8;
-            k1 = k1 & 0xF0FF;
+            tmp2 = tmp2 >> 1; // Divide by 2
+            tmp2 = tmp2 << 16;
+            k1 = k1 & 0xFF00FFFF;
             k1 = k1 & tmp2;
 
             // 3. Advance K1.
@@ -161,13 +161,13 @@ int main() {
             // 4. Read K2[G1] into ch1
             tmp1 = ch1; // Copy ch1 into tmp1 to perform sum
             ch1 = k2;
-            ch1 = ch1 & 0xF000;
-            ch1 = ch1 >> 12;
+            ch1 = ch1 & 0xFF000000;
+            ch1 = ch1 >> 24;
             tmp1 = tmp1 + ch1; // Combine ch1
 
             // 5. Write ch1 to K2[G0]
-            tmp1 = tmp1 > 1; // Divide by 2
-            k2 = k2 & 0xFFF0; // TODO not needed?
+            tmp1 = tmp1 >> 1; // Divide by 2
+            k2 = k2 & 0xFFFFFF00; // TODO not needed?
             k2 = k2 & tmp1;
 
             // 6. Advance K2
@@ -176,31 +176,31 @@ int main() {
 
             // 7. Read K1[G0] into ch1
             tmp1 = k1;
-            tmp1 = tmp1 >> 4;
-            tmp1 = tmp1 & 0x000F;
+            tmp1 = tmp1 >> 8;
+            tmp1 = tmp1 & 0x000000FF;
 
             // 8. Read K3[R1] into ch2
             tmp2 = ch2;
             ch2 = k3;
-            ch2 = ch2 & 0xF000;
-            ch2 = ch2 >> 12;
+            ch2 = ch2 & 0xFF000000;
+            ch2 = ch2 >> 24;
             tmp2 = tmp2 + ch2; // Combine ch2
             
             // 9. Write ch2 to K3[R0]
-            tmp2 = tmp2 > 1; // Divide by 2
-            k3 = k3 & 0xFFF0; // TODO not needed?
+            tmp2 = tmp2 >> 1; // Divide by 2
+            k3 = k3 & 0xFFFFFF00; // TODO not needed?
             k3 = k3 & tmp2;
 
             // 10. Read K1[G0] into ch1
             tmp1 = ch1;
             ch1 = k1;
-            ch1 = ch1 > 4;
-            ch1 = ch1 & 0x000F;
+            ch1 = ch1 >> 8;
+            ch1 = ch1 & 0x000000FF;
             
             // 11. Write ch1 to K3[G1]
-            tmp1 = tmp1 > 1; // Divide by 2
-            tmp1 = tmp1 << 8;
-            k3 = k3 & 0xF0FF; // TODO not needed?
+            tmp1 = tmp1 >> 1; // Divide by 2
+            tmp1 = tmp1 << 16;
+            k3 = k3 & 0xFF00FFFF; // TODO not needed?
             k3 = k3 & tmp1;
 
             // 12. Advance k3
@@ -210,7 +210,7 @@ int main() {
     }
 
     // Create a new output file to write the modified image
-    FILE *outFp = fopen("./data/decoded/candy.bmp", "wb");
+    FILE *outFp = fopen("data/decoded/candy.bmp", "wb");
     if (!outFp) {
         printf("Error creating output file.\n");
         free(pixels);
