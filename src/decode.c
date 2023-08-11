@@ -104,110 +104,109 @@ int main() {
 
     register uint32_t x;
     register uint32_t y;
+
     register uint32_t ch1;
     register uint32_t ch2;
     register uint32_t tmp1;
     register uint32_t tmp2;
+
     register uint32_t k1;
     register uint32_t k2;
     register uint32_t k3;
 
         
-
+    /**
+     * Kernel configurations:
+     * 
+     *          K1                       K2                       K3
+     * +----+----+----+----+    +----+----+----+----+    +----+----+----+----+
+     * | B1 | R0 | G0 | B0 |    | G1 | B1 | R0 | G0 |    | R1 | G1 | B1 | R0 |
+     * +----+----+----+----+    +----+----+----+----+    +----+----+----+----+
+     * 
+     *   --> For GR rows, use ch1 for green, ch2 for red.
+     */
     for (y = 0; y < 20; y += 2) {
         // Loop prologue
-        x = 0;
         k1 = pixels[y * rowSize];
-        k2 = pixels[y * rowSize + 4];
-        k3 = pixels[y * rowSize + 8];
-        printf("k1, k2, k3 = %x%x%x\n", k1, k2, k3);
+        k2 = pixels[y * rowSize + 1];
+        k3 = pixels[y * rowSize + 2];
 
+        // 0. Read K2[R0] into ch2
+        ch2 = k2;
+        ch2 = ch2 & 0x00F0;
+        ch2 = ch2 >> 4;
 
-        // Read k1[3] into ch2
-        ch2 = k1;
-        ch2 = ch2 & 0x000F;
-
-        // Read k1[1] into ch1. (k1[0] is already zeroed)
-        ch1 = k1;
-        ch1 = ch1 >> 8;
-
-        // Write ch2 to k1[0]. k1[0] is already zeroed
-        tmp2 = ch2;
-        tmp2 << 12;
-        k1 = k1 & tmp2;
+        // 0. Preload ch1 with K1[G0]
+        tmp1 = k1;
+        tmp1 = tmp1 >> 4;
 
         for (x = 0; x < infoHeader.width / 12; x ++) {
-            // Advance k1
-            pixels[y * rowSize + 12 * x] = k1; // Write k1 into memory
-            
-            k1 = pixels[y * rowSize + 12 * x + 12]; // Read into k1
-            // exit(0);
-
-            // Read k2[3] into ch1
-            tmp1 = ch1; // Copy ch1 into tmp1 to perform sum
-            ch1 = k2;
-            ch1 = ch1 & 0x000F;
-            tmp1 = tmp1 + ch1; // Mix ch1
-
-            // Read k3[2] into ch2
+            // 1. Read K2[R0] into ch2
             tmp2 = ch2;
             ch2 = k2;
-            ch2 = ch2 & 0x0F00;
+            ch2 = ch2 & 0x00F0;
             ch2 = ch2 >> 4;
-            tmp2 = tmp2 + ch2; // Mix ch2
+            tmp2 = tmp2 + ch2; // Combine ch2
 
-            // Divide ch1 mix by two
-            tmp1 = tmp1 >> 1;
+            // 2. Write ch2 to K1[R0].
+            tmp2 = tmp2 > 1; // Divide by 2
+            tmp2 = tmp2 << 8;
+            k1 = k1 & 0xF0FF;
+            k1 = k1 & tmp2;
 
-            // Divide ch2 mix by two
-            tmp2 = tmp2 >> 1;
+            // 3. Advance K1.
+            pixels[y * rowSize + 12 * x] = k1; // Write K1 back to memory
+            k1 = pixels[y * rowSize + 12 * x + 12]; // Read into K1
 
-            // Write ch1 mix to k2[0]
-            tmp1 = tmp1 << 16;
-            k2 = k2 & 0x0FFF;
+            // 4. Read K2[G1] into ch1
+            tmp1 = ch1; // Copy ch1 into tmp1 to perform sum
+            ch1 = k2;
+            ch1 = ch1 & 0xF000;
+            ch1 = ch1 >> 12;
+            tmp1 = tmp1 + ch1; // Combine ch1
+
+            // 5. Write ch1 to K2[G0]
+            tmp1 = tmp1 > 1; // Divide by 2
+            k2 = k2 & 0xFFF0; // TODO not needed?
             k2 = k2 & tmp1;
 
-            // Write ch2 mix to k2[2]
-            tmp2 = tmp2 >> 8;
-            k2 = k2 & 0xFF0F;
-            k2 = k2 & tmp2;
-
-            // Advance k2
+            // 6. Advance K2
             pixels[y * rowSize + 12 * x + 4] = k2; // Write k2 to memory
             k2 = pixels[y * rowSize + 12 * x + 12 + 4]; // Read into k2
 
-            // Read k1[1] into ch1
+            // 7. Read K1[G0] into ch1
+            tmp1 = k1;
+            tmp1 = tmp1 >> 4;
+            tmp1 = tmp1 & 0x000F;
+
+            // 8. Read K3[R1] into ch2
+            tmp2 = ch2;
+            ch2 = k3;
+            ch2 = ch2 & 0xF000;
+            ch2 = ch2 >> 12;
+            tmp2 = tmp2 + ch2; // Combine ch2
+            
+            // 9. Write ch2 to K3[R0]
+            tmp2 = tmp2 > 1; // Divide by 2
+            k3 = k3 & 0xFFF0; // TODO not needed?
+            k3 = k3 & tmp2;
+
+            // 10. Read K1[G0] into ch1
             tmp1 = ch1;
             ch1 = k1;
-            ch1 = ch1 & 0x0F00;
-            ch1 = ch1 >> 8;
-            tmp1 = tmp1 + ch1; // Mix ch1
+            ch1 = ch1 > 4;
+            ch1 = ch1 & 0x000F;
+            
+            // 11. Write ch1 to K3[G1]
+            tmp1 = tmp1 > 1; // Divide by 2
+            tmp1 = tmp1 << 8;
+            k3 = k3 & 0xF0FF; // TODO not needed?
+            k3 = k3 & tmp1;
 
-            // Read k1[3] into ch2
-            tmp2 = ch2;
-            ch2 = k1;
-            ch2 = ch2 & 0x000F;
-            tmp2 = tmp2 + ch1; // Mix ch2
-
-            // Divide ch2 mix
-            tmp2 = tmp2 > 1;
-
-            // Divide ch1 mix
-            tmp1 = tmp1 > 1;
-
-            // Write ch1 mix to k3[2]
-            tmp1 = tmp1 << 4;
-            k1 = k1 & 0xFF0F;
-            k1 = k1 & tmp1;
-
-            // Advance k3
+            // 12. Advance k3
             pixels[y * rowSize + 12 * x + 8] = k3; // Write k3
             k3 = pixels[y * rowSize + 12 * x + 8 + 12]; // Read into k3
-
-
-
         }
-    
     }
 
     // Create a new output file to write the modified image
