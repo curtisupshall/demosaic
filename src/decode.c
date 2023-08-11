@@ -62,7 +62,7 @@ typedef struct {
 #pragma pack(pop)
 
 int main() {
-    FILE *fp = fopen("data/encoded/candy.bmp", "rb");
+    FILE *fp = fopen("data/encoded/gradient.bmp", "rb");
     if (!fp) {
         printf("Error opening file.\n");
         return 1;
@@ -90,7 +90,7 @@ int main() {
     }
 
     // Calculate the row size in bytes (including padding)
-    uint32_t rowSize = ((infoHeader.width * 3 + 3) & ~3) / 12;
+    uint32_t rowSize = ((infoHeader.width * 3 + 3) & ~3);
 
 
     // Allocate memory for the pixel data
@@ -124,8 +124,9 @@ int main() {
      * +----+----+----+----+    +----+----+----+----+    +----+----+----+----+
      * 
      *   --> For GR rows, use ch1 for green, ch2 for red.
+     *   --> For GB rows, use ch1 for green, ch2 for blue.
      */
-    for (y = 0; y < 50; y += 2) {
+    for (y = 0; y < 200; y ++) {
         // Loop prologue
         k1 = pixels[y * rowSize];
         k2 = pixels[y * rowSize + 1];
@@ -136,11 +137,11 @@ int main() {
         ch2 = ch2 & 0x0000FF00;
         ch2 = ch2 >> 8;
 
-        // 0. Preload ch1 with K1[G0]
+        // 0. Read K1[G0] into ch1
         ch1 = k1;
         ch1 = ch1 >> 8;
 
-        for (x = 0; x < infoHeader.width / 3 - 1; x ++) {
+        for (x = 0; x < infoHeader.width / 4; x ++) {
             // 1. Read K2[R0] into ch2
             tmp2 = ch2;
             ch2 = k2;
@@ -155,8 +156,8 @@ int main() {
             k1 = k1 | tmp2;
 
             // 3. Advance K1.
-            pixels[(y * rowSize) + (3 * x)] = k1; // Write K1 back to memory
-            k1 = pixels[(y * rowSize) + (3 * x) + 3]; // Read into K1
+            pixels[(y * rowSize / 4) + (3 * x)] = k1; // Write K1 back to memory
+            k1 = pixels[(y * rowSize / 4) + (3 * x) + 3]; // Read into K1
 
             // 4. Read K2[G1] into ch1
             tmp1 = ch1; // Copy ch1 into tmp1 to perform sum
@@ -171,8 +172,8 @@ int main() {
             k2 = k2 | tmp1;
 
             // 6. Advance K2
-            pixels[(y * rowSize) + (3 * x) + 1] = k2; // Write k2 to memory
-            k2 = pixels[(y * rowSize) + (3 * x) + 3 + 1]; // Read into k2
+            pixels[(y * rowSize / 4) + (3 * x) + 1] = k2; // Write k2 to memory
+            k2 = pixels[(y * rowSize / 4) + (3 * x) + 3 + 1]; // Read into k2
 
             // 7. Read K1[G0] into ch1
             tmp1 = ch1;
@@ -180,12 +181,6 @@ int main() {
             ch1 = ch1 >> 8;
             ch1 = ch1 & 0x000000FF;
             tmp1 = tmp1 + ch1;
-
-            /*
-            tmp1 = k1;
-            tmp1 = tmp1 >> 8;
-            tmp1 = tmp1 & 0x000000FF;
-            */
 
             // 8. Read K3[R1] into ch2
             tmp2 = ch2;
@@ -213,13 +208,94 @@ int main() {
             k3 = k3 | tmp1;
 
             // 12. Advance k3
-            pixels[(y * rowSize) + (3 * x) + 2] = k3; // Write k3
-            k3 = pixels[(y * rowSize) + (3 * x) + 3 + 2]; // Read into k3
+            pixels[(y * rowSize / 4) + (3 * x) + 2] = k3; // Write k3
+            k3 = pixels[(y * rowSize / 4) + (3 * x) + 3 + 2]; // Read into k3
+        }
+
+        y ++;
+        // Loop prologue
+        k1 = pixels[y * rowSize];
+        k2 = pixels[y * rowSize + 1];
+        k3 = pixels[y * rowSize + 2];
+
+        // 0. Preload ch1 with K1[G0]
+        ch1 = k1;
+        ch1 = ch1 >> 8;
+
+        for (x = 0; x < infoHeader.width / 4; x ++) {
+            // 1. Read K2[B1] into ch2
+            tmp2 = ch2;
+            ch2 = k2;
+            ch2 = ch2 & 0x00FF0000;
+            ch2 = ch2 >> 12;
+            tmp2 = tmp2 + ch2; // Combine ch2
+
+            // 2. Write ch2 to K1[B1].
+            tmp2 = tmp2 >> 1; // Divide by 2
+            tmp2 = tmp2 << 24;
+            k1 = k1 & 0x00FFFFFF;
+            k1 = k1 | tmp2;
+
+            // 3. Read K2[G0] into ch1
+            tmp1 = ch1;
+            ch1 = k2;
+            ch1 = ch1 & 0x000000FF;
+            tmp1 = tmp1 + ch1; // Combine ch1
+
+            // 4. Write ch1 to K1[G0]
+            tmp1 = tmp1 >> 1; // Divide by 2
+            tmp1 = tmp1 << 8;
+            k2 = k2 & 0xFFFF00FF; // TODO not needed?
+            k2 = k2 | tmp1;
+
+            // Advance K1.
+            pixels[(y * rowSize / 4) + (3 * x)] = k1; // Write K1 back to memory
+            k1 = pixels[(y * rowSize / 4) + (3 * x) + 3]; // Read into K1
+
+            // Advance K2
+            pixels[(y * rowSize / 4) + (3 * x) + 1] = k2; // Write k2 to memory
+            k2 = pixels[(y * rowSize / 4) + (3 * x) + 3 + 1]; // Read into k2
+
+            // Read K1[G0] into ch1
+            tmp1 = ch1;
+            ch1 = k1;
+            ch1 = ch1 >> 8;
+            ch1 = ch1 & 0x000000FF;
+            tmp1 = tmp1 + ch1;
+
+            // Read K3[R1] into ch2
+            tmp2 = ch2;
+            ch2 = k3;
+            ch2 = ch2 & 0xFF000000;
+            ch2 = ch2 >> 24;
+            tmp2 = tmp2 + ch2; // Combine ch2
+            
+            // Write ch2 to K3[R0]
+            tmp2 = tmp2 >> 1; // Divide by 2
+            k3 = k3 & 0xFFFFFF00; // TODO not needed?
+            k3 = k3 | tmp2;
+
+            //  Read K1[G0] into ch1
+            tmp1 = ch1;
+            ch1 = k1;
+            ch1 = ch1 >> 8;
+            ch1 = ch1 & 0x000000FF;
+            tmp1 = tmp1 + ch1;
+            
+            // Write ch1 to K3[G1]
+            tmp1 = tmp1 >> 1; // Divide by 2
+            tmp1 = tmp1 << 16;
+            k3 = k3 & 0xFF00FFFF; // TODO not needed?
+            k3 = k3 | tmp1;
+
+            // Advance k3
+            pixels[(y * rowSize / 4) + (3 * x) + 2] = k3; // Write k3
+            k3 = pixels[(y * rowSize / 4) + (3 * x) + 3 + 2]; // Read into k3
         }
     }
 
     // Create a new output file to write the modified image
-    FILE *outFp = fopen("data/decoded/candy.bmp", "wb");
+    FILE *outFp = fopen("data/decoded/gradient.bmp", "wb");
     if (!outFp) {
         printf("Error creating output file.\n");
         free(pixels);
