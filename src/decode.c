@@ -89,17 +89,30 @@ int main() {
         return 1;
     }
 
+    int imageHeight = infoHeader.height;
+    int imageWidth = infoHeader.width;
+
     // Calculate the row size in words (including padding)
-    uint32_t rowSize = ((infoHeader.width * 3 + 3) & ~3) / 4;
+    uint32_t rowSize = ((imageWidth * 3 + 3) & ~3) / 4;
+
+    // Calculate the column size in words (including padding)
+    uint32_t colSize = ((imageHeight * 3 + 3) & ~3) / 4;
 
     // Allocate memory for the pixel data
-    uint32_t *pixels = (uint32_t*)malloc(rowSize * 4 * infoHeader.height);
+    uint32_t *pixels = (uint32_t*)malloc(rowSize * 4 * imageHeight);
+
+    // Allocate memory buffer for image columns
+    uint32_t *colBuffer = (uint32_t*)malloc(colSize * 4);
+
+    printf("imageHeight: %d, imageWidth: %d\n", imageHeight, imageWidth);
+    printf("rowSize: %d, colSize: %d\n", rowSize, colSize);
+
+
 
     // Read the pixel data
-    fread(pixels, rowSize * 4 * infoHeader.height, 1, fp);
+    fread(pixels, rowSize * 4 * imageHeight, 1, fp);
 
     fclose(fp);
-
 
     uint32_t x;
     uint32_t y;
@@ -113,7 +126,6 @@ int main() {
     uint32_t k2;
     uint32_t k3;
 
-        
     /**
      * Kernel configurations:
      * 
@@ -125,8 +137,7 @@ int main() {
      *   --> For GR rows, use ch1 for green, ch2 for red.
      *   --> For GB rows, use ch1 for green, ch2 for blue.
      */
-    for (y = 0; y < infoHeader.height; y ++) {
-        // break;
+    for (y = 0; y < imageHeight; y ++) {
         // Loop prologue
         k1 = pixels[y * rowSize];
         k2 = pixels[y * rowSize + 1];
@@ -141,7 +152,7 @@ int main() {
         ch1 = k1;
         ch1 = ch1 >> 8;
 
-        for (x = 0; x < infoHeader.width / 4; x ++) {
+        for (x = 0; x < imageWidth / 4; x ++) {
             // 1. Read K2[R0] into ch2
             tmp2 = ch2;
             ch2 = k2;
@@ -222,7 +233,7 @@ int main() {
         ch2 = k1;
         ch2 = ch2 & 0x000000FF;
 
-        for (x = 0; x < infoHeader.width / 4; x ++) {
+        for (x = 0; x < imageWidth / 4; x ++) {
             // 1. Read K2[G0] into ch1
             tmp1 = ch1;
             ch1 = k2;
@@ -293,6 +304,31 @@ int main() {
         }
     }
 
+    /*
+    // Read column
+    int i;
+    x = 0;
+    for (y = 0; y < imageHeight; y ++) {
+        // colBuffer[y] = pixels[(y * rowSize / 1) + (3 * x)];
+        *((uint8_t*)colBuffer + y * 3) = pixels[(y * rowSize / 1) + (3 * x)];
+    }
+
+    // Create a temp hex file
+    FILE *hexFp = fopen("out.bin", "wb");
+    if (!outFp) {
+        printf("Error creating temp hex file.\n");
+        free(pixels);
+        return 1;
+    }
+
+    fwrite(colBuffer, colSize * 4, 1, hexFp);
+
+    // Clean up
+    free(colBuffer);
+    fclose(hexFp);
+
+    */
+
     // Create a new output file to write the modified image
     FILE *outFp = fopen("data/decoded/clouds.bmp", "wb");
     if (!outFp) {
@@ -301,16 +337,19 @@ int main() {
         return 1;
     }
 
+
     // Write the BMP header and information header
     fwrite(&header, sizeof(BMPHeader), 1, outFp);
     fwrite(&infoHeader, sizeof(BMPInfoHeader), 1, outFp);
 
     // Write the modified pixel data
-    fwrite(pixels, rowSize * 4 * infoHeader.height, 1, outFp);
+    fwrite(pixels, rowSize * 4 * imageHeight, 1, outFp);
 
     // Clean up
     free(pixels);
     fclose(outFp);
+
+    printf("Goodbye!\n");
 
     return 0;
 }
