@@ -93,10 +93,10 @@ int main() {
     uint32_t rowSize = ((infoHeader.width * 3 + 3) & ~3) / 4;
 
     // Allocate memory for the pixel data
-    uint32_t *pixels = (uint32_t*)malloc(rowSize * infoHeader.height);
+    uint32_t *pixels = (uint32_t*)malloc(rowSize * 4 * infoHeader.height);
 
     // Read the pixel data
-    fread(pixels, rowSize * infoHeader.height, 1, fp);
+    fread(pixels, rowSize * 4 * infoHeader.height, 1, fp);
 
     fclose(fp);
 
@@ -125,7 +125,8 @@ int main() {
      *   --> For GR rows, use ch1 for green, ch2 for red.
      *   --> For GB rows, use ch1 for green, ch2 for blue.
      */
-    for (y = 0; y < 200; y ++) {
+    for (y = 0; y < infoHeader.height; y ++) {
+        // break;
         // Loop prologue
         k1 = pixels[y * rowSize];
         k2 = pixels[y * rowSize + 1];
@@ -329,7 +330,7 @@ int main() {
     fwrite(&infoHeader, sizeof(BMPInfoHeader), 1, outFp);
 
     // Write the modified pixel data
-    fwrite(pixels, rowSize * infoHeader.height, 1, outFp);
+    fwrite(pixels, rowSize * 4 * infoHeader.height, 1, outFp);
 
     // Clean up
     free(pixels);
