@@ -213,12 +213,6 @@ int main() {
         }
 
         y ++;
-        x = 0;
-        // Loop prologue
-        // TODO may not need to redeclare these, as they've already been advanced
-        k1 = pixels[y * rowSize];
-        k2 = pixels[y * rowSize + 1];
-        k3 = pixels[y * rowSize + 2];
 
         // 0. Preload ch1 with K2[G0]
         ch1 = k2;
@@ -227,23 +221,6 @@ int main() {
         // 0. Load K1[B0] into ch2
         ch2 = k1;
         ch2 = ch2 & 0x000000FF;
-
-        /*
-        k1=0xFFFFFFFF;
-        // 4. Advance K1.
-        pixels[(y * rowSize / 1) + (3 * x)] = k1; // Write K1 back to memory
-        k1 = pixels[(y * rowSize / 1) + (3 * x) + 3]; // Read into K1
-
-        k2=0xFFFFFFFF;
-        // 8. Advance K2
-        pixels[(y * rowSize / 1) + (3 * x) + 1] = k2; // Write k2 to memory
-        k2 = pixels[(y * rowSize / 1) + (3 * x) + 3 + 1]; // Read into k2
-
-        k3=0xFFFFFFFF;
-        // 11. Advance K3
-        pixels[(y * rowSize / 1) + (3 * x) + 2] = k3; // Write k3
-        k3 = pixels[(y * rowSize / 1) + (3 * x) + 3 + 2]; // Read into k3
-        */
 
         for (x = 0; x < infoHeader.width / 4; x ++) {
             // 1. Read K2[G0] into ch1
@@ -314,7 +291,6 @@ int main() {
             pixels[(y * rowSize / 1) + (3 * x) + 2] = k3; // Write k3
             k3 = pixels[(y * rowSize / 1) + (3 * x) + 3 + 2]; // Read into k3
         }
-        // break;
     }
 
     // Create a new output file to write the modified image
