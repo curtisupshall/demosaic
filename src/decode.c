@@ -183,6 +183,14 @@ int main() {
         p0_gr = k0_0;
         p0_gr = p0_gr >> 8;
 
+        // 0. Preload p0_gb with K4[G0]
+        p0_gb = k0_4;
+        p0_gb = p0_gb & 0x000000FF;
+
+        // 0. Load K3[B0] into p0_b
+        p0_b = k0_3;
+        p0_b = p0_b & 0x000000FF;
+
         // GR row
         for (x = 0; x < imageWidth / 4; x ++) {
             // 1. Read K1[R0] into p0_r
@@ -211,7 +219,7 @@ int main() {
 
             // 5. Write p0_gr to K1[G0]
             tmp0_gr = tmp0_gr >> 1; // Divide by 2
-            k0_1 = k0_1 & 0xFFFFFF00; // TODO not needed?
+            //k0_1 = k0_1 & 0xFFFFFF00; // TODO not needed?
             k0_1 = k0_1 | tmp0_gr;
 
             // 6. Advance K1
@@ -234,7 +242,7 @@ int main() {
             
             // 9. Write p0_r to K2[R0]
             tmp0_r = tmp0_r >> 1; // Divide by 2
-            k0_2 = k0_2 & 0xFFFFFF00; // TODO not needed?
+            //k0_2 = k0_2 & 0xFFFFFF00; // TODO not needed?
             k0_2 = k0_2 | tmp0_r;
 
             // 10. Read K0[G0] into p0_gr
@@ -247,24 +255,14 @@ int main() {
             // 11. Write p0_gr to K2[G1]
             tmp0_gr = tmp0_gr >> 1; // Divide by 2
             tmp0_gr = tmp0_gr << 16;
-            k0_2 = k0_2 & 0xFF00FFFF; // TODO not needed?
+            //k0_2 = k0_2 & 0xFF00FFFF; // TODO not needed?
             k0_2 = k0_2 | tmp0_gr;
 
             // 12. Advance K2
             pixels[y * rowSize + (3 * x) + 2] = k0_2; // Write k0_2
             k0_2 = pixels[y * rowSize + (3 * x) + 3 + 2]; // Read into k0_2
-        }
 
-        // 0. Preload p0_gb with K4[G0]
-        p0_gb = k0_4;
-        p0_gb = p0_gb & 0x000000FF;
-
-        // 0. Load K3[B0] into p0_b
-        p0_b = k0_3;
-        p0_b = p0_b & 0x000000FF;
-
-        // GB row
-        for (x = 0; x < imageWidth / 4; x ++) {
+            // GB row
             // 1. Read K4[G0] into p0_gb
             tmp0_gb = p0_gb;
             p0_gb = k0_4;
@@ -287,7 +285,7 @@ int main() {
             // 4. Write p0_gb to K3[G0]
             tmp0_gb = tmp0_gb >> 1; // Divide by 2
             tmp0_gb = tmp0_gb << 8;
-            k0_3 = k0_3 & 0xFFFF00FF; // TODO not needed?
+            //k0_3 = k0_3 & 0xFFFF00FF; // TODO not needed?
             k0_3 = k0_3 | tmp0_gb;
 
             // 5. Advance K3.
@@ -310,7 +308,7 @@ int main() {
             // 8. Write p0_gb to K4[G1]
             tmp0_gb = tmp0_gb >> 1; // Divide by 2
             tmp0_gb = tmp0_gb << 24;
-            k0_4 = k0_4 & 0x00FFFFFF; // TODO not needed?
+            //k0_4 = k0_4 & 0x00FFFFFF; // TODO not needed?
             k0_4 = k0_4 | tmp0_gb;
 
             // 9. Advance K4
@@ -326,7 +324,7 @@ int main() {
             // 11. Write p0_b to K5[B1]
             tmp0_b = tmp0_b >> 1; // Divide by 2
             tmp0_b = tmp0_b << 8;
-            k0_5 = k0_5 & 0xFFFF00FF; // TODO not needed?
+            //k0_5 = k0_5 & 0xFFFF00FF; // TODO not needed?
             k0_5 = k0_5 | tmp0_b;
 
             // 12. Advance K5
