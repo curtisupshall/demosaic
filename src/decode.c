@@ -115,58 +115,53 @@ int main() {
     uint32_t x;
     uint32_t y;
 
-    uint32_t ch1;
-    uint32_t ch2;
-    
-    //uint32_t tmp1;
-    //uint32_t tmp2;
-
     // GR bottom
     uint32_t k0_0;
     uint32_t k0_1;
     uint32_t k0_2;
-    int p0_gr;
-    int p0_r;
-    int tmp0_gr;
-    int tmp0_r;
+    uint32_t p0_gr;
+    uint32_t p0_r;
+    uint32_t tmp0_gr;
+    uint32_t tmp0_r;
 
     // GB bottom
     uint32_t k0_3;
     uint32_t k0_4;
     uint32_t k0_5;
-    int p0_gb;
-    int p0_b;
-    int tmp0_gb;
-    int tmp0_b;
+    uint32_t p0_gb;
+    uint32_t p0_b;
+    uint32_t tmp0_gb;
+    uint32_t tmp0_b;
 
     // GR top
     uint32_t k1_0;
     uint32_t k1_1;
     uint32_t k1_2;
-    int p1_gr;
-    int p1_r;
-    int tmp1_gr;
-    int tmp1_r;
+    uint32_t p1_gr;
+    uint32_t p1_r;
+    uint32_t tmp1_gr;
+    uint32_t tmp1_r;
 
     // GB top
     uint32_t k1_3;
     uint32_t k1_4;
     uint32_t k1_5;
-    int p1_gb;
-    int p1_b;
-    int tmp1_gb;
-    int tmp1_b;
+    uint32_t p1_gb;
+    uint32_t p1_b;
+    uint32_t tmp1_gb;
+    uint32_t tmp1_b;
 
     /**
      * Kernel configurations:
      * 
-     *     K0, K3, K6, K9            K1, 4, 7, 10             K2, 5, 8, 11
-     * +----+----+----+----+    +----+----+----+----+    +----+----+----+----+
-     * | B1 | R0 | G0 | B0 |    | G1 | B1 | R0 | G0 |    | R1 | G1 | B1 | R0 |
-     * +----+----+----+----+    +----+----+----+----+    +----+----+----+----+
+     *      K0, K3, K6, K9            K1, 4, 7, 10             K2, 5, 8, 11
+     *  +----+----+----+----+    +----+----+----+----+    +----+----+----+----+
+     *  | B1 | R0 | G0 | B0 |    | G1 | B1 | R0 | G0 |    | R1 | G1 | B1 | R0 |
+     *  +----+----+----+----+    +----+----+----+----+    +----+----+----+----+
      * 
      *   --> For GR rows, we use ch1 for green, ch2 for red.
      *   --> For GB rows, we use ch1 for green, ch2 for blue.
+     *
      */
     for (y = 0; y < imageHeight; y += 2) {
         // Loop prologue
@@ -179,25 +174,25 @@ int main() {
         k0_4 = pixels[(y + 1) * rowSize + 1];
         k0_5 = pixels[(y + 1) * rowSize + 2];
 
-        // 0. Read K1[R0] into ch2
-        ch2 = k0_1;
-        ch2 = ch2 & 0x0000FF00;
-        ch2 = ch2 >> 8;
+        // 0. Read K1[R0] into p0_r
+        p0_r = k0_1;
+        p0_r = p0_r & 0x0000FF00;
+        p0_r = p0_r >> 8;
 
-        // 0. Read K0[G0] into ch1
-        ch1 = k0_0;
-        ch1 = ch1 >> 8;
+        // 0. Read K0[G0] into p0_gr
+        p0_gr = k0_0;
+        p0_gr = p0_gr >> 8;
 
         // GR row
         for (x = 0; x < imageWidth / 4; x ++) {
-            // 1. Read K1[R0] into ch2
-            tmp0_r = ch2;
-            ch2 = k0_1;
-            ch2 = ch2 & 0x0000FF00;
-            ch2 = ch2 >> 8;
-            tmp0_r = tmp0_r + ch2; // Combine ch2
+            // 1. Read K1[R0] into p0_r
+            tmp0_r = p0_r;
+            p0_r = k0_1;
+            p0_r = p0_r & 0x0000FF00;
+            p0_r = p0_r >> 8;
+            tmp0_r = tmp0_r + p0_r; // Combine p0_r
 
-            // 2. Write ch2 to K0[R0].
+            // 2. Write p0_r to K0[R0].
             tmp0_r = tmp0_r >> 1; // Divide by 2
             tmp0_r = tmp0_r << 16;
             k0_0 = k0_0 & 0xFF00FFFF;
@@ -207,14 +202,14 @@ int main() {
             pixels[y * rowSize + (3 * x)] = k0_0; // Write K0 back to memory
             k0_0 = pixels[y * rowSize + (3 * x) + 3]; // Read into K0
 
-            // 4. Read K1[G1] into ch1
-            tmp0_gr = ch1; // Copy ch1 into tmp0_gr to perform sum
-            ch1 = k0_1;
-            ch1 = ch1 & 0xFF000000;
-            ch1 = ch1 >> 24;
-            tmp0_gr = tmp0_gr + ch1; // Combine ch1
+            // 4. Read K1[G1] into p0_gr
+            tmp0_gr = p0_gr; // Copy p0_gr into tmp0_gr to perform sum
+            p0_gr = k0_1;
+            p0_gr = p0_gr & 0xFF000000;
+            p0_gr = p0_gr >> 24;
+            tmp0_gr = tmp0_gr + p0_gr; // Combine p0_gr
 
-            // 5. Write ch1 to K1[G0]
+            // 5. Write p0_gr to K1[G0]
             tmp0_gr = tmp0_gr >> 1; // Divide by 2
             k0_1 = k0_1 & 0xFFFFFF00; // TODO not needed?
             k0_1 = k0_1 | tmp0_gr;
@@ -223,33 +218,33 @@ int main() {
             pixels[y * rowSize + (3 * x) + 1] = k0_1; // Write k0_1 to memory
             k0_1 = pixels[y * rowSize + (3 * x) + 3 + 1]; // Read into k0_1
 
-            // 7. Read K0[G0] into ch1
-            tmp0_gr = ch1;
-            ch1 = k0_0;
-            ch1 = ch1 >> 8;
-            ch1 = ch1 & 0x000000FF;
-            tmp0_gr = tmp0_gr + ch1;
+            // 7. Read K0[G0] into p0_gr
+            tmp0_gr = p0_gr;
+            p0_gr = k0_0;
+            p0_gr = p0_gr >> 8;
+            p0_gr = p0_gr & 0x000000FF;
+            tmp0_gr = tmp0_gr + p0_gr;
 
-            // 8. Read K2[R1] into ch2
-            tmp0_r = ch2;
-            ch2 = k0_2;
-            ch2 = ch2 & 0xFF000000;
-            ch2 = ch2 >> 24;
-            tmp0_r = tmp0_r + ch2; // Combine ch2
+            // 8. Read K2[R1] into p0_r
+            tmp0_r = p0_r;
+            p0_r = k0_2;
+            p0_r = p0_r & 0xFF000000;
+            p0_r = p0_r >> 24;
+            tmp0_r = tmp0_r + p0_r; // Combine p0_r
             
-            // 9. Write ch2 to K2[R0]
+            // 9. Write p0_r to K2[R0]
             tmp0_r = tmp0_r >> 1; // Divide by 2
             k0_2 = k0_2 & 0xFFFFFF00; // TODO not needed?
             k0_2 = k0_2 | tmp0_r;
 
-            // 10. Read K0[G0] into ch1
-            tmp0_gr = ch1;
-            ch1 = k0_0;
-            ch1 = ch1 >> 8;
-            ch1 = ch1 & 0x000000FF;
-            tmp0_gr = tmp0_gr + ch1;
+            // 10. Read K0[G0] into p0_gr
+            tmp0_gr = p0_gr;
+            p0_gr = k0_0;
+            p0_gr = p0_gr >> 8;
+            p0_gr = p0_gr & 0x000000FF;
+            tmp0_gr = tmp0_gr + p0_gr;
             
-            // 11. Write ch1 to K2[G1]
+            // 11. Write p0_gr to K2[G1]
             tmp0_gr = tmp0_gr >> 1; // Divide by 2
             tmp0_gr = tmp0_gr << 16;
             k0_2 = k0_2 & 0xFF00FFFF; // TODO not needed?
@@ -260,36 +255,36 @@ int main() {
             k0_2 = pixels[y * rowSize + (3 * x) + 3 + 2]; // Read into k0_2
         }
 
-        // 0. Preload ch1 with K4[G0]
-        ch1 = k0_4;
-        ch1 = ch1 & 0x000000FF;
+        // 0. Preload p0_gb with K4[G0]
+        p0_gb = k0_4;
+        p0_gb = p0_gb & 0x000000FF;
 
-        // 0. Load K3[B0] into ch2
-        ch2 = k0_3;
-        ch2 = ch2 & 0x000000FF;
+        // 0. Load K3[B0] into p0_b
+        p0_b = k0_3;
+        p0_b = p0_b & 0x000000FF;
 
         // GB row
         for (x = 0; x < imageWidth / 4; x ++) {
-            // 1. Read K4[G0] into ch1
-            tmp0_gb = ch1;
-            ch1 = k0_4;
-            ch1 = ch1 & 0x000000FF;
-            tmp0_gb = tmp0_gb + ch1; // Combine ch1
+            // 1. Read K4[G0] into p0_gb
+            tmp0_gb = p0_gb;
+            p0_gb = k0_4;
+            p0_gb = p0_gb & 0x000000FF;
+            tmp0_gb = tmp0_gb + p0_gb; // Combine p0_gb
             
-            // 2. Read K4[B1] into ch2
-            tmp0_b = ch2;
-            ch2 = k0_4;
-            ch2 = ch2 & 0x00FF0000;
-            ch2 = ch2 >> 16;
-            tmp0_b = tmp0_b + ch2; // Combine ch2
+            // 2. Read K4[B1] into p0_b
+            tmp0_b = p0_b;
+            p0_b = k0_4;
+            p0_b = p0_b & 0x00FF0000;
+            p0_b = p0_b >> 16;
+            tmp0_b = tmp0_b + p0_b; // Combine p0_b
 
-            // 3. Write ch2 to K3[B1].
+            // 3. Write p0_b to K3[B1].
             tmp0_b = tmp0_b >> 1; // Divide by 2
             tmp0_b = tmp0_b << 24;
             k0_3 = k0_3 & 0x00FFFFFF;
             k0_3 = k0_3 | tmp0_b;
 
-            // 4. Write ch1 to K3[G0]
+            // 4. Write p0_gb to K3[G0]
             tmp0_gb = tmp0_gb >> 1; // Divide by 2
             tmp0_gb = tmp0_gb << 8;
             k0_3 = k0_3 & 0xFFFF00FF; // TODO not needed?
@@ -299,20 +294,20 @@ int main() {
             pixels[(y + 1) * rowSize + (3 * x)] = k0_3; // Write K3 back to memory
             k0_3 = pixels[(y + 1) * rowSize + (3 * x) + 3]; // Read into K3
 
-            // 6. Read K4[G0] into ch1
-            tmp0_gb = ch1;
-            ch1 = k0_4;
-            ch1 = ch1 & 0x000000FF;
-            tmp0_gb = tmp0_gb + ch1;
+            // 6. Read K4[G0] into p0_gb
+            tmp0_gb = p0_gb;
+            p0_gb = k0_4;
+            p0_gb = p0_gb & 0x000000FF;
+            tmp0_gb = tmp0_gb + p0_gb;
 
-            // 7. Read K5[G1] into ch1
-            tmp0_gb = ch1;
-            ch1 = k0_5;
-            ch1 = ch1 & 0x00FF0000;
-            ch1 = ch1 >> 16;
-            tmp0_gb = tmp0_gb + ch1;
+            // 7. Read K5[G1] into p0_gb
+            tmp0_gb = p0_gb;
+            p0_gb = k0_5;
+            p0_gb = p0_gb & 0x00FF0000;
+            p0_gb = p0_gb >> 16;
+            tmp0_gb = tmp0_gb + p0_gb;
 
-            // 8. Write ch1 to K4[G1]
+            // 8. Write p0_gb to K4[G1]
             tmp0_gb = tmp0_gb >> 1; // Divide by 2
             tmp0_gb = tmp0_gb << 24;
             k0_4 = k0_4 & 0x00FFFFFF; // TODO not needed?
@@ -322,13 +317,13 @@ int main() {
             pixels[(y + 1) * rowSize + (3 * x) + 1] = k0_4; // Write k0_4 to memory
             k0_4 = pixels[(y + 1) * rowSize + (3 * x) + 3 + 1]; // Read into k0_4
 
-            // 10. Read K3[B0] into ch2
-            tmp0_b = ch2;
-            ch2 = k0_3;
-            ch2 = ch2 & 0x000000FF;
-            tmp0_b = tmp0_b + ch2;
+            // 10. Read K3[B0] into p0_b
+            tmp0_b = p0_b;
+            p0_b = k0_3;
+            p0_b = p0_b & 0x000000FF;
+            tmp0_b = tmp0_b + p0_b;
 
-            // 11. Write ch2 to K5[B1]
+            // 11. Write p0_b to K5[B1]
             tmp0_b = tmp0_b >> 1; // Divide by 2
             tmp0_b = tmp0_b << 8;
             k0_5 = k0_5 & 0xFFFF00FF; // TODO not needed?
