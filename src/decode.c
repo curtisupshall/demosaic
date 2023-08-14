@@ -151,6 +151,9 @@ int main() {
     uint32_t tmp1_gb;
     uint32_t tmp1_b;
 
+    uint32_t tmp_mix1;
+    uint32_t tmp_mix2;
+
     /**
      * Kernel configurations:
      * 
@@ -213,12 +216,6 @@ int main() {
         p1_b = p1_b & 0x000000FF;
 
         for (x = 0; x < imageWidth / 4; x ++) {
-            /**
-             * -------------------------------
-             * | GR kernel rows
-             * -------------------------------
-             */
-
             // 1. Read K0_1[R0] into p0_r
             tmp0_r = p0_r;
             p0_r = k0_1;
@@ -334,8 +331,6 @@ int main() {
             // 5. Advance K1_3.
             pixels[(y + 3) * rowSize + (3 * x)] = k1_3; // Write K1_3 back to memory
             k1_3 = pixels[(y + 3) * rowSize + (3 * x) + 3]; // Read into K1_3
-
-            // TODO impute K0_4[R0]
 
             // 6. Advance K0_1
             pixels[y * rowSize + (3 * x) + 1] = k0_1; // Write k0_1 to memory
@@ -493,6 +488,123 @@ int main() {
             // 12. Advance K1_5
             pixels[(y + 3) * rowSize + (3 * x) + 2] = k1_5; // Write k1_5
             k1_5 = pixels[(y + 3) * rowSize + (3 * x) + 3 + 2]; // Read into k1_5
+        }
+    }
+
+    for (y = 0; y < imageHeight - 2; y += 2) {
+        // Loop prologue
+        k0_0 = pixels[y * rowSize];
+        k0_1 = pixels[y * rowSize + 1];
+        k0_2 = pixels[y * rowSize + 2];
+        k0_3 = pixels[(y + 1) * rowSize];
+        k0_4 = pixels[(y + 1) * rowSize + 1];
+        k0_5 = pixels[(y + 1) * rowSize + 2];
+        k1_0 = pixels[(y + 2) * rowSize];
+        k1_1 = pixels[(y + 2) * rowSize + 1];
+        k1_2 = pixels[(y + 2) * rowSize + 2];
+        k1_3 = pixels[(y + 3) * rowSize];
+        k1_4 = pixels[(y + 3) * rowSize + 1];
+        k1_5 = pixels[(y + 3) * rowSize + 2];
+        
+        for (x = 0; x < imageWidth / 4; x ++) {
+            // * Write K0_0[R0] + K1_0[R0] mix to K0_3[R0].
+            tmp_mix1 = k0_0 & 0x00FF0000;
+            tmp_mix2 = k1_0 & 0x00FF0000;
+            tmp_mix1 = tmp_mix1 + tmp_mix2;
+            tmp_mix1 = tmp_mix1 >> 1;
+            tmp_mix1 = tmp_mix1 & 0x00FF0000;
+            k0_3 = k0_3 | tmp_mix1;
+
+            // 3. Advance K0_0.
+            pixels[y * rowSize + (3 * x)] = k0_0; // Write K0_0 back to memory
+            k0_0 = pixels[y * rowSize + (3 * x) + 3]; // Read into K0_0
+
+            // 3. Advance K1_0.
+            pixels[(y + 2) * rowSize + (3 * x)] = k1_0; // Write K1_0 back to memory
+            k1_0 = pixels[(y + 2) * rowSize + (3 * x) + 3]; // Read into K1_0
+
+            // * Write K0_3[B0, B1] + K1_3[B0, B1] to K1_0[R0].
+            tmp_mix1 = k0_3 + k1_3;
+            tmp_mix1 = tmp_mix1 >> 1;
+            tmp_mix1 = tmp_mix1 & 0x000000FF;
+            tmp_mix2 = (k0_3 >> 1) + (k1_3 >> 1);
+            tmp_mix2 = tmp_mix2 & 0xFF000000;
+            k1_0 = k1_0 | tmp_mix1 | tmp_mix2;
+
+            // 5. Advance K0_3.
+            pixels[(y + 1) * rowSize + (3 * x)] = k0_3; // Write K0_3 back to memory
+            k0_3 = pixels[(y + 1) * rowSize + (3 * x) + 3]; // Read into K0_3
+
+            // 5. Advance K1_3.
+            pixels[(y + 3) * rowSize + (3 * x)] = k1_3; // Write K1_3 back to memory
+            k1_3 = pixels[(y + 3) * rowSize + (3 * x) + 3]; // Read into K1_3
+
+            // * Write K0_1[R0] + K1_1[R0] mix to K0_4[R0].
+            tmp_mix1 = k0_1 >> 1;
+            tmp_mix2 = k0_1 >> 1; // OPT: tmp_mix2 = tmp_mix1
+            tmp_mix1 = tmp_mix1 & 0x0000FF00;
+            tmp_mix2 = tmp_mix2 & 0x0000FF00;
+            tmp_mix1 = tmp_mix1 + tmp_mix2;
+            tmp_mix1 = tmp_mix1 & 0x0000FF00;
+            k0_4 = k0_4 | tmp_mix1;
+            
+            // * Write K0_4[B1] + K1_4[B1] to K1_1[B1].
+            tmp_mix1 = k0_4 >> 1;
+            tmp_mix2 = k1_4 >> 1;
+            tmp_mix1 = tmp_mix1 & 0x00FF0000;
+            tmp_mix2 = tmp_mix2 & 0x00FF0000;
+            tmp_mix1 = tmp_mix1 + tmp_mix2;
+            tmp_mix1 = tmp_mix1 & 0x00FF0000;
+            k1_1 = k1_1 | tmp_mix1;
+
+            // 6. Advance K0_1
+            pixels[y * rowSize + (3 * x) + 1] = k0_1; // Write k0_1 to memory
+            k0_1 = pixels[y * rowSize + (3 * x) + 3 + 1]; // Read into k0_1
+
+            // 6. Advance K1_1
+            pixels[(y + 2) * rowSize + (3 * x) + 1] = k1_1; // Write k1_1 to memory
+            k1_1 = pixels[(y + 2) * rowSize + (3 * x) + 3 + 1]; // Read into k1_1
+
+            // 9. Advance K0_4
+            pixels[(y + 1) * rowSize + (3 * x) + 1] = k0_4; // Write k0_4 to memory
+            k0_4 = pixels[(y + 1) * rowSize + (3 * x) + 3 + 1]; // Read into k0_4
+
+            // 9. Advance K1_4
+            pixels[(y + 3) * rowSize + (3 * x) + 1] = k1_4; // Write k1_4 to memory
+            k1_4 = pixels[(y + 3) * rowSize + (3 * x) + 3 + 1]; // Read into k1_4
+
+            // * Write K0_2[R0, R1] + K1_2[R0, R1] mix to K0_5[R0].
+            tmp_mix1 = k0_2 + k1_2;
+            tmp_mix1 = tmp_mix1 >> 1;
+            tmp_mix1 = tmp_mix1 & 0x000000FF;
+            tmp_mix2 = (k0_2 >> 1) + (k1_2 >> 1);
+            tmp_mix2 = tmp_mix2 & 0xFF000000;
+            k0_5 = k0_5 | tmp_mix1 | tmp_mix2;
+
+            // 12. Advance K0_2
+            pixels[y * rowSize + (3 * x) + 2] = k0_2; // Write k0_2
+            k0_2 = pixels[y * rowSize + (3 * x) + 3 + 2]; // Read into k0_2
+
+            // 12. Advance K1_2
+            pixels[(y + 2) * rowSize + (3 * x) + 2] = k1_2; // Write k1_2
+            k1_2 = pixels[(y + 2) * rowSize + (3 * x) + 3 + 2]; // Read into k1_2
+
+            // 12. Advance K0_5
+            pixels[(y + 1) * rowSize + (3 * x) + 2] = k0_5; // Write k0_5
+            k0_5 = pixels[(y + 1) * rowSize + (3 * x) + 3 + 2]; // Read into k0_5
+
+            // 12. Advance K1_5
+            pixels[(y + 3) * rowSize + (3 * x) + 2] = k1_5; // Write k1_5
+            k1_5 = pixels[(y + 3) * rowSize + (3 * x) + 3 + 2]; // Read into k1_5
+
+
+            
+
+            
+
+           
+
+             
         }
     }
 
