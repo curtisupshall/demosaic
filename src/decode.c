@@ -162,8 +162,6 @@ int main() {
      *  | B1 | R0 | G0 | B0 |    | G1 | B1 | R0 | G0 |    | R1 | G1 | B1 | R0 |
      *  +----+----+----+----+    +----+----+----+----+    +----+----+----+----+
      * 
-     *   --> For GR rows, we use ch1 for green, ch2 for red.
-     *   --> For GB rows, we use ch1 for green, ch2 for blue.
      *
      */
     for (y = 0; y < imageHeight; y += 4) {
@@ -553,8 +551,8 @@ int main() {
             k0_5 = k0_5 | tmp_mix1 | tmp_mix2;
 
             // * Write K0_5[B0] + K1_5[B0] mix to K1_2[B1].
-            tmp_mix1 = k0_5 >> 1;
-            tmp_mix2 = k1_5 >> 1; // OPT: tmp_mix2 = tmp_mix1
+            tmp_mix1 = (k0_5 & 0x0000FF00) >> 1;
+            tmp_mix2 = (k1_5 & 0x0000FF00) >> 1; // OPT: tmp_mix2 = tmp_mix1
             tmp_mix1 = tmp_mix1 & 0x0000FF00;
             tmp_mix2 = tmp_mix2 & 0x0000FF00;
             tmp_mix1 = tmp_mix1 + tmp_mix2;
@@ -608,15 +606,6 @@ int main() {
             // 12. Advance K1_5
             pixels[(y + 3) * rowSize + (3 * x) + 2] = k1_5; // Write k1_5
             k1_5 = pixels[(y + 3) * rowSize + (3 * x) + 3 + 2]; // Read into k1_5
-
-
-            
-
-            
-
-           
-
-             
         }
     }
 
