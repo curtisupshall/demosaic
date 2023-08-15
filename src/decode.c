@@ -507,6 +507,14 @@ int main() {
         k1_5 = pixels[(y + 3) * rowSize + 2];
         
         for (x = 0; x < imageWidth / 4; x ++) {
+            // * Write K0_3[B0, B1] + K1_3[B0, B1] to K1_0[R0].
+            tmp_mix1 = k0_3 + k1_3;
+            tmp_mix1 = tmp_mix1 >> 1;
+            tmp_mix1 = tmp_mix1 & 0x000000FF;
+            tmp_mix2 = (k0_3 >> 1) + (k1_3 >> 1);
+            tmp_mix2 = tmp_mix2 & 0xFF000000;
+            k1_0 = k1_0 | tmp_mix1 | tmp_mix2;
+
             // * Write K0_0[R0] + K1_0[R0] mix to K0_3[R0].
             tmp_mix1 = k0_0 & 0x00FF0000;
             tmp_mix2 = k1_0 & 0x00FF0000;
@@ -522,14 +530,6 @@ int main() {
             // 3. Advance K1_0.
             pixels[(y + 2) * rowSize + (3 * x)] = k1_0; // Write K1_0 back to memory
             k1_0 = pixels[(y + 2) * rowSize + (3 * x) + 3]; // Read into K1_0
-
-            // * Write K0_3[B0, B1] + K1_3[B0, B1] to K1_0[R0].
-            tmp_mix1 = k0_3 + k1_3;
-            tmp_mix1 = tmp_mix1 >> 1;
-            tmp_mix1 = tmp_mix1 & 0x000000FF;
-            tmp_mix2 = (k0_3 >> 1) + (k1_3 >> 1);
-            tmp_mix2 = tmp_mix2 & 0xFF000000;
-            k1_0 = k1_0 | tmp_mix1 | tmp_mix2;
 
             // 5. Advance K0_3.
             pixels[(y + 1) * rowSize + (3 * x)] = k0_3; // Write K0_3 back to memory
@@ -580,6 +580,15 @@ int main() {
             tmp_mix2 = (k0_2 >> 1) + (k1_2 >> 1);
             tmp_mix2 = tmp_mix2 & 0xFF000000;
             k0_5 = k0_5 | tmp_mix1 | tmp_mix2;
+
+            // * Write K0_5[B0] + K1_5[B0] mix to K1_2[B1].
+            tmp_mix1 = k0_1 >> 1;
+            tmp_mix2 = k0_1 >> 1; // OPT: tmp_mix2 = tmp_mix1
+            tmp_mix1 = tmp_mix1 & 0x0000FF00;
+            tmp_mix2 = tmp_mix2 & 0x0000FF00;
+            tmp_mix1 = tmp_mix1 + tmp_mix2;
+            tmp_mix1 = tmp_mix1 & 0x0000FF00;
+            k1_2 = k1_2 | tmp_mix1;
 
             // 12. Advance K0_2
             pixels[y * rowSize + (3 * x) + 2] = k0_2; // Write k0_2
