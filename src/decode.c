@@ -492,6 +492,7 @@ int main() {
     }
 
     for (y = 0; y < imageHeight - 2; y += 2) {
+        //break;
         // Loop prologue
         k0_0 = pixels[y * rowSize];
         k0_1 = pixels[y * rowSize + 1];
@@ -508,7 +509,8 @@ int main() {
         
         for (x = 0; x < imageWidth / 4; x ++) {
             // * Write K0_3[B0, B1] + K1_3[B0, B1] to K1_0[R0].
-            tmp_mix1 = k0_3 + k1_3;
+            tmp_mix1 = k0_3  & 0x000000FF;
+            tmp_mix1 = tmp_mix1 + (k1_3 & 0x000000FF);
             tmp_mix1 = tmp_mix1 >> 1;
             tmp_mix1 = tmp_mix1 & 0x000000FF;
             tmp_mix2 = (k0_3 >> 1) + (k1_3 >> 1);
@@ -534,8 +536,8 @@ int main() {
             k0_4 = k0_4 | tmp_mix1;
             
             // * Write K0_4[B1] + K1_4[B1] to K1_1[B1].
-            tmp_mix1 = k0_4 >> 1;
-            tmp_mix2 = k1_4 >> 1;
+            tmp_mix1 = (k0_4 & 0x00FF0000) >> 1;
+            tmp_mix2 = (k1_4 & 0x00FF0000) >> 1;
             tmp_mix1 = tmp_mix1 & 0x00FF0000;
             tmp_mix2 = tmp_mix2 & 0x00FF0000;
             tmp_mix1 = tmp_mix1 + tmp_mix2;
@@ -543,7 +545,7 @@ int main() {
             k1_1 = k1_1 | tmp_mix1;
 
             // * Write K0_2[R0, R1] + K1_2[R0, R1] mix to K0_5[R0].
-            tmp_mix1 = k0_2 + k1_2;
+            tmp_mix1 = (k0_2 & 0x000000FF) + (k1_2 & 0x000000FF);
             tmp_mix1 = tmp_mix1 >> 1;
             tmp_mix1 = tmp_mix1 & 0x000000FF;
             tmp_mix2 = (k0_2 >> 1) + (k1_2 >> 1);
@@ -551,8 +553,8 @@ int main() {
             k0_5 = k0_5 | tmp_mix1 | tmp_mix2;
 
             // * Write K0_5[B0] + K1_5[B0] mix to K1_2[B1].
-            tmp_mix1 = k0_1 >> 1;
-            tmp_mix2 = k0_1 >> 1; // OPT: tmp_mix2 = tmp_mix1
+            tmp_mix1 = k0_5 >> 1;
+            tmp_mix2 = k1_5 >> 1; // OPT: tmp_mix2 = tmp_mix1
             tmp_mix1 = tmp_mix1 & 0x0000FF00;
             tmp_mix2 = tmp_mix2 & 0x0000FF00;
             tmp_mix1 = tmp_mix1 + tmp_mix2;
