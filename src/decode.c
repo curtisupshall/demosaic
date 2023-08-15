@@ -2,41 +2,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define RED             2
-#define GREEN           1
-#define BLUE            0
-
-#define RED_MINUS_3     -1
-#define RED_PLUS_3      5
-#define BLUE_MINUS_3    -3
-#define BLUE_PLUS_3     3
-#define GREEN_MINUS_3   -2
-#define GREEN_PLUS_3    4
-
-// Optimization flags
-#define VERSION 4
-
-#if VERSION >= 4
-    #define OPT_PREFER_CONST_FOLDING
-#endif
-
-#if VERSION >= 3
-    #define OPT_REDUCE_OP_STR
-#endif
-
-#if VERSION >= 2
-    #define OPT_USE_DIRECTIVES
-#endif
-
-// Macros
-#ifdef OPT_REDUCE_OP_STR
-    #define DIVIDE_BY_TWO(tmp) (tmp >> 1)
-    #define DIVIDE_BY_FOUR(tmp) (tmp >> 2)
-#else
-    #define DIVIDE_BY_TWO(tmp) (tmp / 2)
-    #define DIVIDE_BY_FOUR(tmp) (tmp / 4)
-#endif
-
 #pragma pack(push, 1)
 typedef struct {
     uint16_t type;
@@ -103,9 +68,6 @@ int main() {
 
     // Allocate memory buffer for image columns
     uint32_t *colBuffer = (uint32_t*)malloc(colSize * 4);
-
-    // printf("imageHeight: %d, imageWidth: %d\n", imageHeight, imageWidth);
-    // printf("rowSize: %d, colSize: %d\n", rowSize, colSize);
 
     // Read the pixel data
     fread(pixels, rowSize * 4 * imageHeight, 1, fp);
