@@ -10,9 +10,8 @@ cp ./data/encoded/$1.bmp ./demosaic_arm/encoded.bmp
 
 echo Compile decode.c to decode.exe
 process_id=$!
-/opt/arm/4.3.2/bin/arm-linux-gcc /tmp/demosaic440/decode.c -pg -o ./demosaic_arm/decode.exe
+gcc /tmp/demosaic440/decode.c -g -o ./demosaic_arm/metric.exe
 /opt/arm/4.3.2/bin/arm-linux-gcc -mfloat-abi=softfp -mfpu=neon -static -O3 /tmp/demosaic440/decode.c -pg -o ./demosaic_arm/decode_neon.exe
-/opt/arm/4.3.2/bin/arm-linux-gcc -mfloat-abi=softfp -mfpu=neon -static -O3 /tmp/demosaic440/decode.c -pg -o /tmp/demosaic440/decode_neon.exe
 wait $process_id
 
 
