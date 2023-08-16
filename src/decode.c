@@ -27,7 +27,7 @@ typedef struct {
 #pragma pack(pop)
 
 int main() {
-    FILE *fp = fopen("./encoded.bmp", "rb");
+    FILE *fp = fopen("data/encoded/clouds.bmp", "rb");
     if (!fp) {
         printf("Error opening file.\n");
         return 1;
@@ -571,7 +571,7 @@ int main() {
     }
 
     // Create a new output file to write the modified image
-    FILE *outFp = fopen("./decoded.bmp", "wb");
+    FILE *outFp = fopen("data/decoded/clouds.bmp", "wb");
     if (!outFp) {
         printf("Error creating output file.\n");
         free(pixels);
