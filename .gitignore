@@ -1,6 +1,5 @@
 *.exe
 *.out
-*.asm
 *.bin
 analysis.txt
 

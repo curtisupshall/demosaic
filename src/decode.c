@@ -295,6 +295,7 @@ int decodeImage(uint32_t* pixels, uint32_t rowSize, uint32_t imageWidth, uint32_
             p1_gr = p1_gr >> 24;
             tmp1_gr = tmp1_gr + p1_gr; // Combine p1_gr
 
+            asm("label1:");
             // 4. Write p0_gb to K0_3[G0]
             tmp0_gb = tmp0_gb >> 1; // Divide by 2
             tmp0_gb = tmp0_gb << 8;
@@ -316,6 +317,8 @@ int decodeImage(uint32_t* pixels, uint32_t rowSize, uint32_t imageWidth, uint32_
             tmp1_gr = tmp1_gr >> 1; // Divide by 2
             k1_1 = k1_1 & 0xFFFFFF00; // TODO not needed?
             k1_1 = k1_1 | tmp1_gr;
+
+            asm("label2:");
 
             // 5. Advance K0_3.
             pixels[(y + 1) * rowSize + (3 * x)] = k0_3; // Write K0_3 back to memory
