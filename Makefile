@@ -10,6 +10,9 @@ arm:
 asm:
 	/opt/arm/4.3.2/bin/arm-linux-gcc -mfloat-abi=softfp -mfpu=neon -static -O3 src/decode.c -S -o decode.asm
 
+test:
+	gcc src/test.c -g -o decode.exe
+
 clean:
 
 	rm ./*.exe data/decoded/*.bmp data/encoded/*.bmp

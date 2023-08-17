@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include "arm_neon.h"
+#include <string.h>
+#include <dirent.h>
 
 #pragma pack(push, 1)
 typedef struct {
@@ -27,75 +28,86 @@ typedef struct {
 } BMPInfoHeader;
 #pragma pack(pop)
 
-void loadImage(char* imageName, BMPHeader header, BMPInfoHeader infoHeader)
+/**
+ * Loads an image, returning a pointer to its pixel data.
+ */
+uint32_t* loadImage(char* path, BMPHeader* header, BMPInfoHeader* infoHeader)
 {
-    FILE *fp = fopen(imageName, "rb");
+    uint32_t rowSize;
+    uint32_t* pixels;
+    FILE *fp;
+
+    fp = fopen(path, "rb");
     if (!fp) {
-        printf("Error opening file: %s.\n",imageName);
+        printf("Error opening file: %s.\n", path);
         exit(1);
     }
 
     // Read the BMP header
-    fread(&header, sizeof(BMPHeader), 1, fp);
-    fread(&infoHeader, sizeof(BMPInfoHeader), 1, fp);
+    fread(header, sizeof(BMPHeader), 1, fp);
+    fread(infoHeader, sizeof(BMPInfoHeader), 1, fp);
 
     // Check if it's a valid BMP file
-    if (header.type != 0x4D42) {
+    if (header->type != 0x4D42) {
         printf("Invalid BMP file.\n");
         fclose(fp);
-        return 1;
+        exit(1);
     }
 
     // Check if it's a 24-bit BMP file
-    if (infoHeader.bitDepth != 24) {
+    if (infoHeader->bitDepth != 24) {
         printf("Unsupported bit depth. Only 24-bit BMP is supported.\n");
         fclose(fp);
-        return 1;
+        exit(1);
     }
 
     // Calculate the row size in words (including padding)
-    uint32_t rowSize = ((infoHeader.width * 3 + 3) & ~3) / 4;
+    rowSize = ((infoHeader->width * 3 + 3) & ~3) / 4;
 
     // Allocate memory for the pixel data
-    uint32_t *pixels = (uint32_t*)malloc(rowSize * 4 * infoHeader.height);
+    pixels = (uint32_t*)malloc(rowSize * 4 * infoHeader->height);
+
+    if (!pixels) {
+        printf("Failed to allocate enough memory.\n");
+        exit(1);
+    }
 
     // Read the pixel data
-    fread(pixels, rowSize * 4 * infoHeader.height, 1, fp);
+    fread(pixels, rowSize * 4 * infoHeader->height, 1, fp);
 
     fclose(fp);
+    return pixels;
 }
 
-void writeImage(char* imageName, uint32_t* pixels, BMPHeader header, BMPInfoHeader infoHeader)
+void writeImage(char* path, uint32_t* pixels, BMPHeader* header, BMPInfoHeader* infoHeader)
 {
     // Create a new output file to write the modified image
-    FILE *outFp = fopen("data/decoded/ldrink.bmp", "wb");
+    FILE *outFp;
+    uint32_t rowSize;
+    
+    outFp = fopen(path, "wb");
     if (!outFp) {
-        printf("Error creating output file.\n");
+        printf("Error creating output file: %s\n", path);
         free(pixels);
-        return 1;
+        exit(1);
     }
 
 
     // Write the BMP header and information header
-    fwrite(&header, sizeof(BMPHeader), 1, outFp);
-    fwrite(&infoHeader, sizeof(BMPInfoHeader), 1, outFp);
+    fwrite(header, sizeof(BMPHeader), 1, outFp);
+    fwrite(infoHeader, sizeof(BMPInfoHeader), 1, outFp);
 
-    uint32_t rowSize = ((infoHeader.width * 3 + 3) & ~3) / 4;
+    rowSize = ((infoHeader->width * 3 + 3) & ~3) / 4;
 
     // Write the modified pixel data
-    fwrite(pixels, rowSize * 4 * infoHeader.height, 1, outFp);
+    fwrite(pixels, rowSize * 4 * infoHeader->height, 1, outFp);
 
     // Clean up
     free(pixels);
     fclose(outFp);
-
-    printf("Goodbye!\n");
 }
 
-
-
-int main(void) {
-
+int decodeImage(uint32_t* pixels, uint32_t rowSize, uint32_t imageWidth, uint32_t imageHeight) {
     uint32_t x;
     uint32_t y;
 
@@ -590,6 +602,53 @@ int main(void) {
             k1_5 = pixels[(y + 3) * rowSize + (3 * x) + 3 + 2]; // Read into k1_5
         }
     }
+}
 
-    return 0;
+int main()
+{
+    const char *inFolder = "data/encoded";
+    const char *outFolder = "data/decoded";
+
+    DIR *dir;
+    struct dirent *entry;
+
+    BMPHeader header;
+    BMPInfoHeader infoHeader;
+    uint32_t *pixels;
+    uint32_t rowSize;
+    char imagePath[1024];
+
+    dir = opendir(inFolder);
+    if (dir == NULL) {
+        perror("Error opening encoded images directory");
+        exit(1);
+    }
+
+    while ((entry = readdir(dir)) != NULL) {
+        // Check if the file has a .bmp extension
+        const char *file_name = entry->d_name;
+        const char *extension = strrchr(file_name, '.');
+
+        if (extension != NULL && strcmp(extension, ".bmp") == 0) {
+            snprintf(imagePath, sizeof(imagePath), "%s/%s", inFolder, file_name);
+            printf("Decoding image: %s\n", imagePath);
+
+            // Load image
+            pixels = loadImage(imagePath, &header, &infoHeader);
+            rowSize = ((infoHeader.width * 3 + 3) & ~3) / 4;
+
+            // Process image
+            decodeImage(pixels, rowSize, infoHeader.width, infoHeader.height);
+
+            // Write image
+            snprintf(imagePath, sizeof(imagePath), "%s/%s", outFolder, file_name);
+            writeImage(imagePath, pixels, &header, &infoHeader);            
+        }
+        
+    }
+
+    closedir(dir);
+
+    printf("Goodbye!\n");
+    exit(0);
 }
