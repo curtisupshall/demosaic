@@ -168,7 +168,7 @@ int decodeImage(uint32_t *pixels)
      */
     for (y = 0; y < IMAGE_HEIGHT; y += 4)
     {
-        asm("RowImput Strt:");
+        asm("rowStrt:");
 
         // Loop prologue
         k0_1 = pixels[y * ROW_SIZE + 1];
@@ -484,7 +484,7 @@ int decodeImage(uint32_t *pixels)
 
     for (y = 0; y < IMAGE_HEIGHT - 2; y += 2)
     {
-        asm("ColImput Strt:");
+        asm("ColStrt:");
 
         // Loop prologue
         k0_0 = pixels[y * ROW_SIZE];
