@@ -209,6 +209,7 @@ int decodeImage(uint32_t* pixels, uint32_t rowSize, uint32_t imageWidth, uint32_
         p1_b = p1_b & 0x000000FF;
 
         for (x = 0; x < imageWidth / 4; x ++) {
+            asm("Label1");
             // 1. Read K0_1[R0] into p0_r
             tmp0_r = p0_r;
             p0_r = k0_1;
@@ -234,6 +235,8 @@ int decodeImage(uint32_t* pixels, uint32_t rowSize, uint32_t imageWidth, uint32_
             p1_gb = k1_4;
             p1_gb = p1_gb & 0x000000FF;
             tmp1_gb = tmp1_gb + p1_gb; // Combine p1_gb
+
+            asm("Label2");
 
             // 2. Write p0_r to K0_0[R0].
             tmp0_r = tmp0_r >> 1; // Divide by 2
@@ -295,30 +298,23 @@ int decodeImage(uint32_t* pixels, uint32_t rowSize, uint32_t imageWidth, uint32_
             p1_gr = p1_gr >> 24;
             tmp1_gr = tmp1_gr + p1_gr; // Combine p1_gr
 
-            asm("label1:");
             // 4. Write p0_gb to K0_3[G0]
             tmp0_gb = tmp0_gb >> 1; // Divide by 2
             tmp0_gb = tmp0_gb << 8;
-            k0_3 = k0_3 & 0xFFFF00FF; // TODO not needed?
             k0_3 = k0_3 | tmp0_gb;
 
             // 4. Write p1_gb to K1_3[G0]
             tmp1_gb = tmp1_gb >> 1; // Divide by 2
             tmp1_gb = tmp1_gb << 8;
-            k1_3 = k1_3 & 0xFFFF00FF; // TODO not needed?
             k1_3 = k1_3 | tmp1_gb;
 
             // 5. Write p0_gr to K0_1[G0]
             tmp0_gr = tmp0_gr >> 1; // Divide by 2
-            k0_1 = k0_1 & 0xFFFFFF00; // TODO not needed?
             k0_1 = k0_1 | tmp0_gr;
 
             // 5. Write p1_gr to K1_1[G0]
             tmp1_gr = tmp1_gr >> 1; // Divide by 2
-            k1_1 = k1_1 & 0xFFFFFF00; // TODO not needed?
             k1_1 = k1_1 | tmp1_gr;
-
-            asm("label2:");
 
             // 5. Advance K0_3.
             pixels[(y + 1) * rowSize + (3 * x)] = k0_3; // Write K0_3 back to memory
@@ -392,23 +388,19 @@ int decodeImage(uint32_t* pixels, uint32_t rowSize, uint32_t imageWidth, uint32_
             // 8. Write p0_gb to K0_4[G1]
             tmp0_gb = tmp0_gb >> 1; // Divide by 2
             tmp0_gb = tmp0_gb << 24;
-            k0_4 = k0_4 & 0x00FFFFFF; // TODO not needed?
             k0_4 = k0_4 | tmp0_gb;
 
             // 8. Write p1_gb to K1_4[G1]
             tmp1_gb = tmp1_gb >> 1; // Divide by 2
             tmp1_gb = tmp1_gb << 24;
-            k1_4 = k1_4 & 0x00FFFFFF; // TODO not needed?
             k1_4 = k1_4 | tmp1_gb;
             
             // 9. Write p0_r to K0_2[R0]
             tmp0_r = tmp0_r >> 1; // Divide by 2
-            k0_2 = k0_2 & 0xFFFFFF00; // TODO not needed?
             k0_2 = k0_2 | tmp0_r;
 
             // 9. Write p1_r to K1_2[R0]
             tmp1_r = tmp1_r >> 1; // Divide by 2
-            k1_2 = k1_2 & 0xFFFFFF00; // TODO not needed?
             k1_2 = k1_2 | tmp1_r;
 
             // 9. Advance K0_4
@@ -448,25 +440,21 @@ int decodeImage(uint32_t* pixels, uint32_t rowSize, uint32_t imageWidth, uint32_
             // 11. Write p0_gr to K0_2[G1]
             tmp0_gr = tmp0_gr >> 1; // Divide by 2
             tmp0_gr = tmp0_gr << 16;
-            k0_2 = k0_2 & 0xFF00FFFF; // TODO not needed?
             k0_2 = k0_2 | tmp0_gr;
 
             // 11. Write p1_gr to K1_2[G1]
             tmp1_gr = tmp1_gr >> 1; // Divide by 2
             tmp1_gr = tmp1_gr << 16;
-            k1_2 = k1_2 & 0xFF00FFFF; // TODO not needed?
             k1_2 = k1_2 | tmp1_gr;
 
             // 11. Write p0_b to K0_5[B1]
             tmp0_b = tmp0_b >> 1; // Divide by 2
             tmp0_b = tmp0_b << 8;
-            k0_5 = k0_5 & 0xFFFF00FF; // TODO not needed?
             k0_5 = k0_5 | tmp0_b;
 
             // 11. Write p1_b to K1_5[B1]
             tmp1_b = tmp1_b >> 1; // Divide by 2
             tmp1_b = tmp1_b << 8;
-            k1_5 = k1_5 & 0xFFFF00FF; // TODO not needed?
             k1_5 = k1_5 | tmp1_b;
 
             // 12. Advance K0_2
