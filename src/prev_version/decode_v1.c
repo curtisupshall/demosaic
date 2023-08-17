@@ -124,6 +124,8 @@ int decodeImage(uint8_t *pixels, uint32_t rowSize, uint32_t imageWidth, uint32_t
     // Access pixel values
     for (y = 2; y < imageHeight - 2; y++)
     {
+        asm("RowImput Strt:");
+
         for (x = 2; x < imageWidth - 2; x++)
         {
             // Gr pixel
@@ -158,6 +160,8 @@ int decodeImage(uint8_t *pixels, uint32_t rowSize, uint32_t imageWidth, uint32_t
         y++;
         for (x = 0; x < imageWidth; x++)
         {
+            asm("ColImput Strt:");
+
             // B pixel
             px = &pixels[y * rowSize + x * 3];
 

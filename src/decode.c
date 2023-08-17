@@ -160,10 +160,9 @@ int decodeImage(uint32_t* pixels) {
      *
      */
     for (y = 0; y < IMAGE_HEIGHT; y += 4) {
-        // Loop prologue
+        asm("RowImput Strt:");
 
-        asm("Label1:");
-        k0_0 = pixels[y * ROW_SIZE];
+        // Loop prologue
         k0_1 = pixels[y * ROW_SIZE + 1];
         k0_2 = pixels[y * ROW_SIZE + 2];
         k0_3 = pixels[(y + 1) * ROW_SIZE];
@@ -175,7 +174,6 @@ int decodeImage(uint32_t* pixels) {
         k1_3 = pixels[(y + 3) * ROW_SIZE];
         k1_4 = pixels[(y + 3) * ROW_SIZE + 1];
         k1_5 = pixels[(y + 3) * ROW_SIZE + 2];
-        asm("Label2:");
 
         // 0. Read K0_1[R0] into p0_r
         p0_r = k0_1;
@@ -476,6 +474,8 @@ int decodeImage(uint32_t* pixels) {
     }
 
     for (y = 0; y < IMAGE_HEIGHT - 2; y += 2) {
+        asm("ColImput Strt:");
+
         // Loop prologue
         k0_0 = pixels[y * ROW_SIZE];
         k0_1 = pixels[y * ROW_SIZE + 1];
