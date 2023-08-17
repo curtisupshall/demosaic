@@ -3,6 +3,7 @@
 *.asm
 
 /data/decoded/*.bmp
+/data/encoded/*.bmp
 cachegrind.out.*
 
 *.bin

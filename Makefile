@@ -14,6 +14,6 @@ test:
 	gcc src/test.c -g -o decode.exe
 
 clean:
-	rm -rf ./*.exe data/decoded/*.bmp
+	rm -rf ./*.exe ./*.out data/decoded/*.bmp
 
 .PHONY: encode, decode, clean
