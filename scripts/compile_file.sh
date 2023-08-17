@@ -2,7 +2,7 @@
 
 echo Copying files to /tmp
 mkdir -p /tmp/demosaic440/
-cp ./src/$ /tmp/demosaic440/decode.c
+cp ./src/$1 /tmp/demosaic440/decode.c
 
 echo copy files for arm device to /demosaic_arm
 mkdir -p ./demosaic_arm/
