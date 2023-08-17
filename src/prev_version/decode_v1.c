@@ -4,6 +4,10 @@
 #include <string.h>
 #include <dirent.h>
 
+#define RED 2
+#define GREEN 1
+#define BLUE 0
+
 #pragma pack(push, 1)
 typedef struct
 {
@@ -115,7 +119,7 @@ void writeImage(char *path, uint32_t *pixels, BMPHeader *header, BMPInfoHeader *
 
 int decodeImage(uint32_t *pixels, uint32_t rowSize, uint32_t imageWidth, uint32_t imageHeight)
 {
-    uint8_t *px;
+    uint32_t *px;
     int y, x;
     // Access pixel values
     for (y = 2; y < imageHeight - 2; y++)
