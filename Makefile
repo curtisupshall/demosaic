@@ -8,7 +8,7 @@ arm:
 	/opt/arm/4.3.2/bin/arm-linux-gcc -mfloat-abi=softfp -mfpu=neon -static -O3 src/decode.c -pg -o decode.out
 
 asm:
-	/opt/arm/4.3.2/bin/arm-linux-gcc -mfloat-abi=softfp -mfpu=neon -static -O3 src/decode.c -S -o decode.asm
+	/opt/arm/4.3.2/bin/arm-linux-gcc -mfloat-abi=softfp -mfpu=neon -static -O3 src/decode.c -S -o build/decode.asm
 
 test:
 	gcc src/test.c -g -o decode.exe

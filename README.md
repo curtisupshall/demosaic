@@ -1,60 +1,23 @@
 # demosaic
 
-https://en.wikipedia.org/wiki/Demosaicing
+Image demosaicing algorithm.
 
-# Environment Setup:
+## Prerequisites
+You should be on `seng440.ece.uvic.ca`.
 
-## UVIC VPN:
+## Building the application
 
-### Requirements:
+1. (Setup) encoding the images:
+```bash
+make encode
+```
 
-    - Cisco Anyconnect VPN Client
-        - https://www.uvic.ca/systems/services/internettelephone/remoteaccess/
-    - MobaXterm (Parent Terminal Controller)
-        - https://mobaxterm.mobatek.net/
-    - PuTTY (SSH Client)
-        - https://www.putty.org/
+2. Compiling the demosaicing algorithm:
+```bash
+make arm
+```
 
-### Procedure:
-
-    - Connect to `vpn.uvic.ca` (not needed, connection to ips works without)
-        - Group: 3 - Student
-        - 2FA
-
-    - Open MobaXTerm
-        - Left side panel, "Sessions" (Star)
-        - Right click, New session
-        - SSH
-
-    - Connect to ECE Undergraduate Lab
-        - Remote host: `$ ssh ugls.ece.uvic.ca`
-        - [ ] Specify username: netlink ID
-        - OK
-
-        - Clone `this` Repo to the SSH PC
-
-        - Compile code
-            - note: might not have permission: `$ chmod +x ./scripts/compile_file.sh`
-            - Run compile_file.sh: `$ ./scripts/compile_file.sh`
-
-    - Connect to Seng 440 ECE PC
-        - Refer above `seng440.ece.uvic.ca`
-
-        - Run `$ lftp -e "mirror -R ./demosaic_arm/" -u user1,q6coHjd7P @arm`
-
-        - Exit (Or open another machine)
-
-        - Telnet into Arm machine
-            - `$ telnet arm`
-                - `(user1, user2, user3, user4)`
-            - `q6coHjd7P`
-            - `cd ./demosaic_arm`
-            - `chmod +x ./decode.exe`
-            - `./decode.exe`
-
-    - To get image of Arm device,
-        -Run `$ lftp -e "mirror -c ./demosaic_arm/" -u user1,q6coHjd7P @arm`
-        -Image should be viewable through the mobaxterm file system
-
-    - To get pg stats:
-        - Run `$ gprof -b ./demosaic_arm/decode.exe ./demosaic_arm/gmon.out > ./demosaic_arm/analysis.txt`
+3. Running the algorithm"
+```bash
+qumu-arm ./decode.out
+```
