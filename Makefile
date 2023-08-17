@@ -7,11 +7,14 @@ decode:
 arm:
 	/opt/arm/4.3.2/bin/arm-linux-gcc -mfloat-abi=softfp -mfpu=neon -static -O3 src/decode.c -pg -o decode.out
 
+run:
+	qemu-arm ./decode.out
+
 asm:
 	/opt/arm/4.3.2/bin/arm-linux-gcc -mfloat-abi=softfp -mfpu=neon -static -O3 src/decode.c -S -o build/decode.asm
 
-test:
-	gcc src/test.c -g -o decode.exe
+gprof:
+	gprof ./decode.out ./gmon.out > analysis.txt
 
 clean:
 	rm -rf ./*.exe ./*.out data/decoded/*.bmp data/encoded/*.bmp

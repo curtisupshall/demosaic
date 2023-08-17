@@ -19,5 +19,5 @@ make arm
 
 3. Running the algorithm"
 ```bash
-qumu-arm ./decode.out
+make run
 ```

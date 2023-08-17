@@ -2,6 +2,7 @@
 *.out
 *.asm
 *.bin
+analysis.txt
 
 /data/decoded/*.bmp
 /data/encoded/*.bmp
