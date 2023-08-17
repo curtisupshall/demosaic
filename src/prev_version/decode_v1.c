@@ -37,57 +37,10 @@ typedef struct
 /**
  * Loads an image, returning a pointer to its pixel data.
  */
-uint8_t *loadImage(char *path, BMPHeader *header, BMPInfoHeader *infoHeader)
-{
-    uint32_t rowSize;
-    uint8_t *pixels;
-    FILE *fp;
+// uint8_t *loadImage(char *path, BMPHeader *header, BMPInfoHeader *infoHeader)
+// {
 
-    fp = fopen(path, "rb");
-    if (!fp)
-    {
-        printf("Error opening file: %s.\n", path);
-        exit(1);
-    }
-
-    // Read the BMP header
-    fread(header, sizeof(BMPHeader), 1, fp);
-    fread(infoHeader, sizeof(BMPInfoHeader), 1, fp);
-
-    // Check if it's a valid BMP file
-    if (header->type != 0x4D42)
-    {
-        printf("Invalid BMP file.\n");
-        fclose(fp);
-        exit(1);
-    }
-
-    // Check if it's a 24-bit BMP file
-    if (infoHeader->bitDepth != 24)
-    {
-        printf("Unsupported bit depth. Only 24-bit BMP is supported.\n");
-        fclose(fp);
-        exit(1);
-    }
-
-    // Calculate the row size in words (including padding)
-    rowSize = ((infoHeader->width * 3 + 3) & ~3);
-
-    // Allocate memory for the pixel data
-    pixels = (uint8_t *)malloc(rowSize * infoHeader->height);
-
-    if (!pixels)
-    {
-        printf("Failed to allocate enough memory.\n");
-        exit(1);
-    }
-
-    // Read the pixel data
-    fread(pixels, rowSize * 4 * infoHeader->height, 1, fp);
-
-    fclose(fp);
-    return pixels;
-}
+// }
 
 void writeImage(char *path, uint8_t *pixels, BMPHeader *header, BMPInfoHeader *infoHeader)
 {
@@ -117,9 +70,9 @@ void writeImage(char *path, uint8_t *pixels, BMPHeader *header, BMPInfoHeader *i
     fclose(outFp);
 }
 
-int decodeImage(uint8_t *pixels, uint32_t rowSize, uint32_t imageWidth, uint32_t imageHeight)
+int decodeImage(uint8_t *pixels, uint32_t rowSize, int32_t imageWidth, int32_t imageHeight)
 {
-    uint32_t *px;
+    uint8_t *px;
     int y, x;
     // Access pixel values
     for (y = 2; y < imageHeight - 2; y++)
@@ -201,6 +154,8 @@ int main()
     DIR *dir;
     struct dirent *entry;
 
+    FILE *fp;
+
     BMPHeader header;
     BMPInfoHeader infoHeader;
     uint8_t *pixels;
@@ -226,8 +181,48 @@ int main()
             printf("Decoding image: %s\n", imagePath);
 
             // Load image
-            pixels = loadImage(imagePath, &header, &infoHeader);
+            // pixels = loadImage(imagePath, &header, &infoHeader);
+
+            fp = fopen(imagePath, "rb");
+            if (!fp)
+            {
+                printf("Error opening file.\n");
+                return 1;
+            }
+
+            BMPHeader header;
+            BMPInfoHeader infoHeader;
+
+            // Read the BMP header
+            fread(&header, sizeof(BMPHeader), 1, fp);
+            fread(&infoHeader, sizeof(BMPInfoHeader), 1, fp);
+
+            // Check if it's a valid BMP file
+            if (header.type != 0x4D42)
+            {
+                printf("Invalid BMP file.\n");
+                fclose(fp);
+                return 1;
+            }
+
+            // Check if it's a 24-bit BMP file
+            if (infoHeader.bitDepth != 24)
+            {
+                printf("Unsupported bit depth. Only 24-bit BMP is supported.\n");
+                fclose(fp);
+                return 1;
+            }
+
+            // Calculate the row size in bytes (including padding)
             rowSize = ((infoHeader.width * 3 + 3) & ~3);
+
+            // Allocate memory for the pixel data
+            uint8_t *pixels = (uint8_t *)malloc(rowSize * infoHeader.height);
+
+            // Read the pixel data
+            fread(pixels, rowSize * infoHeader.height, 1, fp);
+
+            fclose(fp);
 
             // Process image
             decodeImage(pixels, rowSize, infoHeader.width, infoHeader.height);
