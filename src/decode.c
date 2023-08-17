@@ -28,12 +28,17 @@ typedef struct {
 } BMPInfoHeader;
 #pragma pack(pop)
 
+static const uint32_t IMAGE_WIDTH = 4000;
+static const uint32_t IMAGE_HEIGHT = 6000;
+
+// Calculate the row size in words (including padding)
+static const uint32_t ROW_SIZE = 3000; //((IMAGE_WIDTH * 3 + 3) & ~3) / 4;
+
 /**
  * Loads an image, returning a pointer to its pixel data.
  */
 uint32_t* loadImage(char* path, BMPHeader* header, BMPInfoHeader* infoHeader)
 {
-    uint32_t rowSize;
     uint32_t* pixels;
     FILE *fp;
 
@@ -61,11 +66,8 @@ uint32_t* loadImage(char* path, BMPHeader* header, BMPInfoHeader* infoHeader)
         exit(1);
     }
 
-    // Calculate the row size in words (including padding)
-    rowSize = ((infoHeader->width * 3 + 3) & ~3) / 4;
-
     // Allocate memory for the pixel data
-    pixels = (uint32_t*)malloc(rowSize * 4 * infoHeader->height);
+    pixels = (uint32_t*)malloc(ROW_SIZE * 4 * infoHeader->height);
 
     if (!pixels) {
         printf("Failed to allocate enough memory.\n");
@@ -73,7 +75,7 @@ uint32_t* loadImage(char* path, BMPHeader* header, BMPInfoHeader* infoHeader)
     }
 
     // Read the pixel data
-    fread(pixels, rowSize * 4 * infoHeader->height, 1, fp);
+    fread(pixels, ROW_SIZE * 4 * infoHeader->height, 1, fp);
 
     fclose(fp);
     return pixels;
@@ -83,7 +85,6 @@ void writeImage(char* path, uint32_t* pixels, BMPHeader* header, BMPInfoHeader* 
 {
     // Create a new output file to write the modified image
     FILE *outFp;
-    uint32_t rowSize;
     
     outFp = fopen(path, "wb");
     if (!outFp) {
@@ -97,17 +98,15 @@ void writeImage(char* path, uint32_t* pixels, BMPHeader* header, BMPInfoHeader* 
     fwrite(header, sizeof(BMPHeader), 1, outFp);
     fwrite(infoHeader, sizeof(BMPInfoHeader), 1, outFp);
 
-    rowSize = ((infoHeader->width * 3 + 3) & ~3) / 4;
-
     // Write the modified pixel data
-    fwrite(pixels, rowSize * 4 * infoHeader->height, 1, outFp);
+    fwrite(pixels, ROW_SIZE * 4 * infoHeader->height, 1, outFp);
 
     // Clean up
     free(pixels);
     fclose(outFp);
 }
 
-int decodeImage(uint32_t* pixels, uint32_t rowSize, uint32_t imageWidth, uint32_t imageHeight) {
+int decodeImage(uint32_t* pixels) {
     uint32_t x;
     uint32_t y;
 
@@ -160,19 +159,22 @@ int decodeImage(uint32_t* pixels, uint32_t rowSize, uint32_t imageWidth, uint32_
      * 
      *
      */
-    for (y = 0; y < imageHeight; y += 4) {
+    for (y = 0; y < IMAGE_HEIGHT; y += 4) {
         // Loop prologue
-        k0_1 = pixels[y * rowSize + 1];
-        k0_2 = pixels[y * rowSize + 2];
-        k0_3 = pixels[(y + 1) * rowSize];
-        k0_4 = pixels[(y + 1) * rowSize + 1];
-        k0_5 = pixels[(y + 1) * rowSize + 2];
-        k1_0 = pixels[(y + 2) * rowSize];
-        k1_1 = pixels[(y + 2) * rowSize + 1];
-        k1_2 = pixels[(y + 2) * rowSize + 2];
-        k1_3 = pixels[(y + 3) * rowSize];
-        k1_4 = pixels[(y + 3) * rowSize + 1];
-        k1_5 = pixels[(y + 3) * rowSize + 2];
+
+        asm("Label1:");
+        k0_1 = pixels[y * ROW_SIZE + 1];
+        k0_2 = pixels[y * ROW_SIZE + 2];
+        k0_3 = pixels[(y + 1) * ROW_SIZE];
+        k0_4 = pixels[(y + 1) * ROW_SIZE + 1];
+        k0_5 = pixels[(y + 1) * ROW_SIZE + 2];
+        k1_0 = pixels[(y + 2) * ROW_SIZE];
+        k1_1 = pixels[(y + 2) * ROW_SIZE + 1];
+        k1_2 = pixels[(y + 2) * ROW_SIZE + 2];
+        k1_3 = pixels[(y + 3) * ROW_SIZE];
+        k1_4 = pixels[(y + 3) * ROW_SIZE + 1];
+        k1_5 = pixels[(y + 3) * ROW_SIZE + 2];
+        asm("Label2:");
 
         // 0. Read K0_1[R0] into p0_r
         p0_r = k0_1;
@@ -208,8 +210,7 @@ int decodeImage(uint32_t* pixels, uint32_t rowSize, uint32_t imageWidth, uint32_
         p1_b = k1_3;
         p1_b = p1_b & 0x000000FF;
 
-        for (x = 0; x < imageWidth / 4; x ++) {
-            asm("Label1");
+        for (x = 0; x < IMAGE_WIDTH / 4; x ++) {
             // 1. Read K0_1[R0] into p0_r
             tmp0_r = p0_r;
             p0_r = k0_1;
@@ -235,8 +236,6 @@ int decodeImage(uint32_t* pixels, uint32_t rowSize, uint32_t imageWidth, uint32_
             p1_gb = k1_4;
             p1_gb = p1_gb & 0x000000FF;
             tmp1_gb = tmp1_gb + p1_gb; // Combine p1_gb
-
-            asm("Label2");
 
             // 2. Write p0_r to K0_0[R0].
             tmp0_r = tmp0_r >> 1; // Divide by 2
@@ -265,12 +264,12 @@ int decodeImage(uint32_t* pixels, uint32_t rowSize, uint32_t imageWidth, uint32_
             tmp1_b = tmp1_b + p1_b; // Combine p1_b
 
             // 3. Advance K0_0.
-            pixels[y * rowSize + (3 * x)] = k0_0; // Write K0_0 back to memory
-            k0_0 = pixels[y * rowSize + (3 * x) + 3]; // Read into K0_0
+            pixels[y * ROW_SIZE + (3 * x)] = k0_0; // Write K0_0 back to memory
+            k0_0 = pixels[y * ROW_SIZE + (3 * x) + 3]; // Read into K0_0
 
             // 3. Advance K1_0.
-            pixels[(y + 2) * rowSize + (3 * x)] = k1_0; // Write K1_0 back to memory
-            k1_0 = pixels[(y + 2) * rowSize + (3 * x) + 3]; // Read into K1_0
+            pixels[(y + 2) * ROW_SIZE + (3 * x)] = k1_0; // Write K1_0 back to memory
+            k1_0 = pixels[(y + 2) * ROW_SIZE + (3 * x) + 3]; // Read into K1_0
 
             // 3. Write p0_b to K0_3[B1].
             tmp0_b = tmp0_b >> 1; // Divide by 2
@@ -317,20 +316,20 @@ int decodeImage(uint32_t* pixels, uint32_t rowSize, uint32_t imageWidth, uint32_
             k1_1 = k1_1 | tmp1_gr;
 
             // 5. Advance K0_3.
-            pixels[(y + 1) * rowSize + (3 * x)] = k0_3; // Write K0_3 back to memory
-            k0_3 = pixels[(y + 1) * rowSize + (3 * x) + 3]; // Read into K0_3
+            pixels[(y + 1) * ROW_SIZE + (3 * x)] = k0_3; // Write K0_3 back to memory
+            k0_3 = pixels[(y + 1) * ROW_SIZE + (3 * x) + 3]; // Read into K0_3
 
             // 5. Advance K1_3.
-            pixels[(y + 3) * rowSize + (3 * x)] = k1_3; // Write K1_3 back to memory
-            k1_3 = pixels[(y + 3) * rowSize + (3 * x) + 3]; // Read into K1_3
+            pixels[(y + 3) * ROW_SIZE + (3 * x)] = k1_3; // Write K1_3 back to memory
+            k1_3 = pixels[(y + 3) * ROW_SIZE + (3 * x) + 3]; // Read into K1_3
 
             // 6. Advance K0_1
-            pixels[y * rowSize + (3 * x) + 1] = k0_1; // Write k0_1 to memory
-            k0_1 = pixels[y * rowSize + (3 * x) + 3 + 1]; // Read into k0_1
+            pixels[y * ROW_SIZE + (3 * x) + 1] = k0_1; // Write k0_1 to memory
+            k0_1 = pixels[y * ROW_SIZE + (3 * x) + 3 + 1]; // Read into k0_1
 
             // 6. Advance K1_1
-            pixels[(y + 2) * rowSize + (3 * x) + 1] = k1_1; // Write k1_1 to memory
-            k1_1 = pixels[(y + 2) * rowSize + (3 * x) + 3 + 1]; // Read into k1_1
+            pixels[(y + 2) * ROW_SIZE + (3 * x) + 1] = k1_1; // Write k1_1 to memory
+            k1_1 = pixels[(y + 2) * ROW_SIZE + (3 * x) + 3 + 1]; // Read into k1_1
 
             // 6. Read K0_4[G0] into p0_gb
             tmp0_gb = p0_gb;
@@ -404,12 +403,12 @@ int decodeImage(uint32_t* pixels, uint32_t rowSize, uint32_t imageWidth, uint32_
             k1_2 = k1_2 | tmp1_r;
 
             // 9. Advance K0_4
-            pixels[(y + 1) * rowSize + (3 * x) + 1] = k0_4; // Write k0_4 to memory
-            k0_4 = pixels[(y + 1) * rowSize + (3 * x) + 3 + 1]; // Read into k0_4
+            pixels[(y + 1) * ROW_SIZE + (3 * x) + 1] = k0_4; // Write k0_4 to memory
+            k0_4 = pixels[(y + 1) * ROW_SIZE + (3 * x) + 3 + 1]; // Read into k0_4
 
             // 9. Advance K1_4
-            pixels[(y + 3) * rowSize + (3 * x) + 1] = k1_4; // Write k1_4 to memory
-            k1_4 = pixels[(y + 3) * rowSize + (3 * x) + 3 + 1]; // Read into k1_4
+            pixels[(y + 3) * ROW_SIZE + (3 * x) + 1] = k1_4; // Write k1_4 to memory
+            k1_4 = pixels[(y + 3) * ROW_SIZE + (3 * x) + 3 + 1]; // Read into k1_4
 
             // 10. Read K0_0[G0] into p0_gr
             tmp0_gr = p0_gr;
@@ -458,39 +457,39 @@ int decodeImage(uint32_t* pixels, uint32_t rowSize, uint32_t imageWidth, uint32_
             k1_5 = k1_5 | tmp1_b;
 
             // 12. Advance K0_2
-            pixels[y * rowSize + (3 * x) + 2] = k0_2; // Write k0_2
-            k0_2 = pixels[y * rowSize + (3 * x) + 3 + 2]; // Read into k0_2
+            pixels[y * ROW_SIZE + (3 * x) + 2] = k0_2; // Write k0_2
+            k0_2 = pixels[y * ROW_SIZE + (3 * x) + 3 + 2]; // Read into k0_2
 
             // 12. Advance K1_2
-            pixels[(y + 2) * rowSize + (3 * x) + 2] = k1_2; // Write k1_2
-            k1_2 = pixels[(y + 2) * rowSize + (3 * x) + 3 + 2]; // Read into k1_2
+            pixels[(y + 2) * ROW_SIZE + (3 * x) + 2] = k1_2; // Write k1_2
+            k1_2 = pixels[(y + 2) * ROW_SIZE + (3 * x) + 3 + 2]; // Read into k1_2
 
             // 12. Advance K0_5
-            pixels[(y + 1) * rowSize + (3 * x) + 2] = k0_5; // Write k0_5
-            k0_5 = pixels[(y + 1) * rowSize + (3 * x) + 3 + 2]; // Read into k0_5
+            pixels[(y + 1) * ROW_SIZE + (3 * x) + 2] = k0_5; // Write k0_5
+            k0_5 = pixels[(y + 1) * ROW_SIZE + (3 * x) + 3 + 2]; // Read into k0_5
 
             // 12. Advance K1_5
-            pixels[(y + 3) * rowSize + (3 * x) + 2] = k1_5; // Write k1_5
-            k1_5 = pixels[(y + 3) * rowSize + (3 * x) + 3 + 2]; // Read into k1_5
+            pixels[(y + 3) * ROW_SIZE + (3 * x) + 2] = k1_5; // Write k1_5
+            k1_5 = pixels[(y + 3) * ROW_SIZE + (3 * x) + 3 + 2]; // Read into k1_5
         }
     }
 
-    for (y = 0; y < imageHeight - 2; y += 2) {
+    for (y = 0; y < IMAGE_HEIGHT - 2; y += 2) {
         // Loop prologue
-        k0_0 = pixels[y * rowSize];
-        k0_1 = pixels[y * rowSize + 1];
-        k0_2 = pixels[y * rowSize + 2];
-        k0_3 = pixels[(y + 1) * rowSize];
-        k0_4 = pixels[(y + 1) * rowSize + 1];
-        k0_5 = pixels[(y + 1) * rowSize + 2];
-        k1_0 = pixels[(y + 2) * rowSize];
-        k1_1 = pixels[(y + 2) * rowSize + 1];
-        k1_2 = pixels[(y + 2) * rowSize + 2];
-        k1_3 = pixels[(y + 3) * rowSize];
-        k1_4 = pixels[(y + 3) * rowSize + 1];
-        k1_5 = pixels[(y + 3) * rowSize + 2];
+        k0_0 = pixels[y * ROW_SIZE];
+        k0_1 = pixels[y * ROW_SIZE + 1];
+        k0_2 = pixels[y * ROW_SIZE + 2];
+        k0_3 = pixels[(y + 1) * ROW_SIZE];
+        k0_4 = pixels[(y + 1) * ROW_SIZE + 1];
+        k0_5 = pixels[(y + 1) * ROW_SIZE + 2];
+        k1_0 = pixels[(y + 2) * ROW_SIZE];
+        k1_1 = pixels[(y + 2) * ROW_SIZE + 1];
+        k1_2 = pixels[(y + 2) * ROW_SIZE + 2];
+        k1_3 = pixels[(y + 3) * ROW_SIZE];
+        k1_4 = pixels[(y + 3) * ROW_SIZE + 1];
+        k1_5 = pixels[(y + 3) * ROW_SIZE + 2];
         
-        for (x = 0; x < imageWidth / 4; x ++) {
+        for (x = 0; x < IMAGE_WIDTH / 4; x ++) {
             // * Write K0_3[B0, B1] + K1_3[B0, B1] to K1_0[R0].
             tmp_mix1 = k0_3  & 0x000000FF;
             tmp_mix1 = tmp_mix1 + (k1_3 & 0x000000FF);
@@ -545,52 +544,52 @@ int decodeImage(uint32_t* pixels, uint32_t rowSize, uint32_t imageWidth, uint32_
             k1_2 = k1_2 | tmp_mix1;
 
             // 3. Advance K0_0.
-            pixels[y * rowSize + (3 * x)] = k0_0; // Write K0_0 back to memory
-            k0_0 = pixels[y * rowSize + (3 * x) + 3]; // Read into K0_0
+            pixels[y * ROW_SIZE + (3 * x)] = k0_0; // Write K0_0 back to memory
+            k0_0 = pixels[y * ROW_SIZE + (3 * x) + 3]; // Read into K0_0
 
             // 3. Advance K1_0.
-            pixels[(y + 2) * rowSize + (3 * x)] = k1_0; // Write K1_0 back to memory
-            k1_0 = pixels[(y + 2) * rowSize + (3 * x) + 3]; // Read into K1_0
+            pixels[(y + 2) * ROW_SIZE + (3 * x)] = k1_0; // Write K1_0 back to memory
+            k1_0 = pixels[(y + 2) * ROW_SIZE + (3 * x) + 3]; // Read into K1_0
 
             // 5. Advance K0_3.
-            pixels[(y + 1) * rowSize + (3 * x)] = k0_3; // Write K0_3 back to memory
-            k0_3 = pixels[(y + 1) * rowSize + (3 * x) + 3]; // Read into K0_3
+            pixels[(y + 1) * ROW_SIZE + (3 * x)] = k0_3; // Write K0_3 back to memory
+            k0_3 = pixels[(y + 1) * ROW_SIZE + (3 * x) + 3]; // Read into K0_3
 
             // 5. Advance K1_3.
-            pixels[(y + 3) * rowSize + (3 * x)] = k1_3; // Write K1_3 back to memory
-            k1_3 = pixels[(y + 3) * rowSize + (3 * x) + 3]; // Read into K1_3
+            pixels[(y + 3) * ROW_SIZE + (3 * x)] = k1_3; // Write K1_3 back to memory
+            k1_3 = pixels[(y + 3) * ROW_SIZE + (3 * x) + 3]; // Read into K1_3
 
             // 6. Advance K0_1
-            pixels[y * rowSize + (3 * x) + 1] = k0_1; // Write k0_1 to memory
-            k0_1 = pixels[y * rowSize + (3 * x) + 3 + 1]; // Read into k0_1
+            pixels[y * ROW_SIZE + (3 * x) + 1] = k0_1; // Write k0_1 to memory
+            k0_1 = pixels[y * ROW_SIZE + (3 * x) + 3 + 1]; // Read into k0_1
 
             // 6. Advance K1_1
-            pixels[(y + 2) * rowSize + (3 * x) + 1] = k1_1; // Write k1_1 to memory
-            k1_1 = pixels[(y + 2) * rowSize + (3 * x) + 3 + 1]; // Read into k1_1
+            pixels[(y + 2) * ROW_SIZE + (3 * x) + 1] = k1_1; // Write k1_1 to memory
+            k1_1 = pixels[(y + 2) * ROW_SIZE + (3 * x) + 3 + 1]; // Read into k1_1
 
             // 9. Advance K0_4
-            pixels[(y + 1) * rowSize + (3 * x) + 1] = k0_4; // Write k0_4 to memory
-            k0_4 = pixels[(y + 1) * rowSize + (3 * x) + 3 + 1]; // Read into k0_4
+            pixels[(y + 1) * ROW_SIZE + (3 * x) + 1] = k0_4; // Write k0_4 to memory
+            k0_4 = pixels[(y + 1) * ROW_SIZE + (3 * x) + 3 + 1]; // Read into k0_4
 
             // 9. Advance K1_4
-            pixels[(y + 3) * rowSize + (3 * x) + 1] = k1_4; // Write k1_4 to memory
-            k1_4 = pixels[(y + 3) * rowSize + (3 * x) + 3 + 1]; // Read into k1_4
+            pixels[(y + 3) * ROW_SIZE + (3 * x) + 1] = k1_4; // Write k1_4 to memory
+            k1_4 = pixels[(y + 3) * ROW_SIZE + (3 * x) + 3 + 1]; // Read into k1_4
 
             // 12. Advance K0_2
-            pixels[y * rowSize + (3 * x) + 2] = k0_2; // Write k0_2
-            k0_2 = pixels[y * rowSize + (3 * x) + 3 + 2]; // Read into k0_2
+            pixels[y * ROW_SIZE + (3 * x) + 2] = k0_2; // Write k0_2
+            k0_2 = pixels[y * ROW_SIZE + (3 * x) + 3 + 2]; // Read into k0_2
 
             // 12. Advance K1_2
-            pixels[(y + 2) * rowSize + (3 * x) + 2] = k1_2; // Write k1_2
-            k1_2 = pixels[(y + 2) * rowSize + (3 * x) + 3 + 2]; // Read into k1_2
+            pixels[(y + 2) * ROW_SIZE + (3 * x) + 2] = k1_2; // Write k1_2
+            k1_2 = pixels[(y + 2) * ROW_SIZE + (3 * x) + 3 + 2]; // Read into k1_2
 
             // 12. Advance K0_5
-            pixels[(y + 1) * rowSize + (3 * x) + 2] = k0_5; // Write k0_5
-            k0_5 = pixels[(y + 1) * rowSize + (3 * x) + 3 + 2]; // Read into k0_5
+            pixels[(y + 1) * ROW_SIZE + (3 * x) + 2] = k0_5; // Write k0_5
+            k0_5 = pixels[(y + 1) * ROW_SIZE + (3 * x) + 3 + 2]; // Read into k0_5
 
             // 12. Advance K1_5
-            pixels[(y + 3) * rowSize + (3 * x) + 2] = k1_5; // Write k1_5
-            k1_5 = pixels[(y + 3) * rowSize + (3 * x) + 3 + 2]; // Read into k1_5
+            pixels[(y + 3) * ROW_SIZE + (3 * x) + 2] = k1_5; // Write k1_5
+            k1_5 = pixels[(y + 3) * ROW_SIZE + (3 * x) + 3 + 2]; // Read into k1_5
         }
     }
 }
@@ -606,7 +605,6 @@ int main()
     BMPHeader header;
     BMPInfoHeader infoHeader;
     uint32_t *pixels;
-    uint32_t rowSize;
     char imagePath[1024];
 
     dir = opendir(inFolder);
@@ -626,10 +624,9 @@ int main()
 
             // Load image
             pixels = loadImage(imagePath, &header, &infoHeader);
-            rowSize = ((infoHeader.width * 3 + 3) & ~3) / 4;
 
             // Process image
-            decodeImage(pixels, rowSize, infoHeader.width, infoHeader.height);
+            decodeImage(pixels);
 
             // Write image
             snprintf(imagePath, sizeof(imagePath), "%s/%s", outFolder, file_name);
