@@ -1,10 +1,11 @@
 *.exe
 *.out
 *.asm
+*.bin
 
 /data/decoded/*.bmp
 /data/encoded/*.bmp
 cachegrind.out.*
+build/*
 
-*.bin
-
+!.gitkeep
