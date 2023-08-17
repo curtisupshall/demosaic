@@ -608,8 +608,6 @@ int decodeImage(uint32_t *pixels)
 
 int main()
 {
-    asm("V4_Strt:");
-
     const char *inFolder = "data/encoded";
     const char *outFolder = "data/decoded";
 

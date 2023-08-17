@@ -621,8 +621,6 @@ int decodeImage(uint32_t *pixels, uint32_t rowSize, uint32_t imageWidth, uint32_
 
 int main()
 {
-    asm("V2_Strt:");
-
     const char *inFolder = "data/encoded";
     const char *outFolder = "data/decoded";
 
