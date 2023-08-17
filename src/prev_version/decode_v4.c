@@ -171,6 +171,7 @@ int decodeImage(uint32_t *pixels)
         asm("rowStrt:");
 
         // Loop prologue
+        k0_0 = pixels[y * ROW_SIZE];
         k0_1 = pixels[y * ROW_SIZE + 1];
         k0_2 = pixels[y * ROW_SIZE + 2];
         k0_3 = pixels[(y + 1) * ROW_SIZE];
