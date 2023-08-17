@@ -37,7 +37,7 @@ typedef struct
 /**
  * Loads an image, returning a pointer to its pixel data.
  */
-uint32_t *loadImage(char *path, BMPHeader *header, BMPInfoHeader *infoHeader)
+uint8_t *loadImage(char *path, BMPHeader *header, BMPInfoHeader *infoHeader)
 {
     uint32_t rowSize;
     uint8_t *pixels;
@@ -74,7 +74,7 @@ uint32_t *loadImage(char *path, BMPHeader *header, BMPInfoHeader *infoHeader)
     rowSize = ((infoHeader->width * 3 + 3) & ~3);
 
     // Allocate memory for the pixel data
-    pixels = (uint32_t *)malloc(rowSize * infoHeader->height);
+    pixels = (uint8_t *)malloc(rowSize * infoHeader->height);
 
     if (!pixels)
     {
