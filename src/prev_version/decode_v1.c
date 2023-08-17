@@ -40,7 +40,7 @@ typedef struct
 uint32_t *loadImage(char *path, BMPHeader *header, BMPInfoHeader *infoHeader)
 {
     uint32_t rowSize;
-    uint32_t *pixels;
+    uint8_t *pixels;
     FILE *fp;
 
     fp = fopen(path, "rb");
@@ -71,10 +71,10 @@ uint32_t *loadImage(char *path, BMPHeader *header, BMPInfoHeader *infoHeader)
     }
 
     // Calculate the row size in words (including padding)
-    rowSize = ((infoHeader->width * 3 + 3) & ~3) / 4;
+    rowSize = ((infoHeader->width * 3 + 3) & ~3);
 
     // Allocate memory for the pixel data
-    pixels = (uint32_t *)malloc(rowSize * 4 * infoHeader->height);
+    pixels = (uint32_t *)malloc(rowSize * infoHeader->height);
 
     if (!pixels)
     {
@@ -89,7 +89,7 @@ uint32_t *loadImage(char *path, BMPHeader *header, BMPInfoHeader *infoHeader)
     return pixels;
 }
 
-void writeImage(char *path, uint32_t *pixels, BMPHeader *header, BMPInfoHeader *infoHeader)
+void writeImage(char *path, uint8_t *pixels, BMPHeader *header, BMPInfoHeader *infoHeader)
 {
     // Create a new output file to write the modified image
     FILE *outFp;
@@ -107,17 +107,17 @@ void writeImage(char *path, uint32_t *pixels, BMPHeader *header, BMPInfoHeader *
     fwrite(header, sizeof(BMPHeader), 1, outFp);
     fwrite(infoHeader, sizeof(BMPInfoHeader), 1, outFp);
 
-    rowSize = ((infoHeader->width * 3 + 3) & ~3) / 4;
+    rowSize = ((infoHeader->width * 3 + 3) & ~3);
 
     // Write the modified pixel data
-    fwrite(pixels, rowSize * 4 * infoHeader->height, 1, outFp);
+    fwrite(pixels, rowSize * infoHeader->height, 1, outFp);
 
     // Clean up
     free(pixels);
     fclose(outFp);
 }
 
-int decodeImage(uint32_t *pixels, uint32_t rowSize, uint32_t imageWidth, uint32_t imageHeight)
+int decodeImage(uint8_t *pixels, uint32_t rowSize, uint32_t imageWidth, uint32_t imageHeight)
 {
     uint32_t *px;
     int y, x;
@@ -199,7 +199,7 @@ int main()
 
     BMPHeader header;
     BMPInfoHeader infoHeader;
-    uint32_t *pixels;
+    uint8_t *pixels;
     uint32_t rowSize;
     char imagePath[1024];
 
@@ -223,7 +223,7 @@ int main()
 
             // Load image
             pixels = loadImage(imagePath, &header, &infoHeader);
-            rowSize = ((infoHeader.width * 3 + 3) & ~3) / 4;
+            rowSize = ((infoHeader.width * 3 + 3) & ~3);
 
             // Process image
             decodeImage(pixels, rowSize, infoHeader.width, infoHeader.height);
