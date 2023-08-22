@@ -1,4 +1,11 @@
 *.exe
-/demosaic_arm/
+*.out
+*.bin
+analysis.txt
+
 /data/decoded/*.bmp
 /data/encoded/*.bmp
+cachegrind.out.*
+build/*
+
+!.gitkeep

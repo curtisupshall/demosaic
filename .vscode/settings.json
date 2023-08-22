@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "stdlib.h": "c",
+        "arm_neon.h": "c"
+    }
+}

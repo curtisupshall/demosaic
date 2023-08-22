@@ -1,56 +1,35 @@
 # demosaic
 
-https://en.wikipedia.org/wiki/Demosaicing
+Image demosaicing algorithm.
 
-# Environment Setup:
+## Prerequisites
+You should be on `seng440.ece.uvic.ca`.
 
-## UVIC VPN:
+## Building the application
 
-### Requirements:
+0. Clean any artifacts:
+```bash
+make clean
+```
 
-    - Cisco Anyconnect VPN Client
-        - https://www.uvic.ca/systems/services/internettelephone/remoteaccess/
-    - MobaXterm (Parent Terminal Controller)
-        - https://mobaxterm.mobatek.net/
-    - PuTTY (SSH Client)
-        - https://www.putty.org/
+1. (Setup) encoding the images:
+```bash
+make encode
+```
 
-### Procedure:
+2. Compiling the demosaicing algorithm:
+```bash
+make arm
+```
 
-    - Connect to `vpn.uvic.ca` (not needed, connection to ips works without)
-        - Group: 3 - Student
-        - 2FA
+3. Running the algorithm:
+```bash
+make run
+```
 
-    - Open MobaXTerm
-        - Left side panel, "Sessions" (Star)
-        - Right click, New session
-        - SSH
+4. Generate the assembly:
+```bash
+make asm
+```
 
-    - Connect to ECE Undergraduate Lab
-        - Remote host: `$ ssh ugls.ece.uvic.ca`
-        - [ ] Specify username: netlink ID
-        - OK
-
-        - Clone `this` Repo to the SSH PC
-
-        - Compile code
-            - note: might not have permission: `$ chmod +x ./scripts/compile_file.sh`
-            - Run compile_file.sh: `$ ./scripts/compile_file.sh`
-
-    - Connect to Seng 440 ECE PC
-        - Refer above `seng440.ece.uvic.ca`
-
-        - Run `$ lftp -e "mirror -R ./demosaic_arm/" -u user1,q6coHjd7P @arm`
-
-        - Exit (Or open another machine)
-
-        - Telnet into Arm machine
-            - `$ telnet arm`
-                - `(user1, user2, user3, user4)`
-            - `q6coHjd7P`
-            - `chmod +x ./demosaic_arm/decode.exe`
-            - `./demosaic_arm/decode.exe`
-
-    - To get image of Arm device,
-        -Run `$ lftp -e "get ./demosaic_arm/_#####_decoded.bmp" -u user1,q6coHjd7P @arm`
-        -Image should be viewable through the mobaxterm file system
+The assembly is output to the /build directory.
